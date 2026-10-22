@@ -5,7 +5,11 @@
 *.o
 *.out
 *.exe
+build/
+codebase_ex1.txt
 
 # IDE directories
 .vscode/
 .idea/
+
+
