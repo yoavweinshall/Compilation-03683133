@@ -1,0 +1,11 @@
+# macOS system files
+.DS_Store
+
+# Compiled Object files and executables
+*.o
+*.out
+*.exe
+
+# IDE directories
+.vscode/
+.idea/
