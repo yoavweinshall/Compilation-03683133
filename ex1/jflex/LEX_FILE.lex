@@ -75,7 +75,8 @@ CommentChar     = [a-zA-Z0-9\ \t\r\n\(\)\[\]\{\}\?\!\+\-\*\/\.\;]
     "and"               { return symbol(TokenNames.AND);}
     "or"                { return symbol(TokenNames.OR);}
 
-    // Literals and Identifiers
+    // Literals, Identifiers, and Error cases
+    0[0-9]+             { return symbol(TokenNames.ERROR); }
     {STRING}            { return symbol(TokenNames.STRING, yytext()); }
     {INTEGER}           { 
                             long val = Long.parseLong(yytext());
