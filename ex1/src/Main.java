@@ -61,12 +61,14 @@ public class Main {
             l = new Lexer(fileReader);
             s = l.next_token();
 
+            boolean isFirstToken = true;
+
             while (s.sym != TokenNames.EOF) {
                 // Lexical error handling mechanism: Truncate file and write ERROR
                 if (s.sym == TokenNames.ERROR) {
                     fileWriter.close();
                     fileWriter = new PrintWriter(outputFileName);
-                    fileWriter.print("ERROR\n");
+                    fileWriter.print("ERROR"); // Removed newline
                     fileWriter.close();
                     return; 
                 }
@@ -84,7 +86,13 @@ public class Main {
                 }
 
                 System.out.println(outputLine);
-                fileWriter.print(outputLine + "\n");
+                
+                // Add newline before printing to prevent a trailing blank line at EOF
+                if (!isFirstToken) {
+                    fileWriter.print("\n");
+                }
+                fileWriter.print(outputLine);
+                isFirstToken = false;
                 
                 s = l.next_token();
             }
@@ -95,7 +103,7 @@ public class Main {
             // Fallback error handling in case of unexpected exceptions
             try {
                 PrintWriter errorWriter = new PrintWriter(outputFileName);
-                errorWriter.print("ERROR\n");
+                errorWriter.print("ERROR"); // Removed newline
                 errorWriter.close();
             } catch (FileNotFoundException fnfe) {
                 fnfe.printStackTrace();
