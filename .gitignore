@@ -7,6 +7,9 @@
 *.exe
 build/
 codebase_ex1.txt
+bin/
+LEXER
+src/Lexer.java
 
 # IDE directories
 .vscode/
