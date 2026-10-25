@@ -26,17 +26,17 @@ INTEGER         = 0 | [1-9][0-9]*
 ID              = [a-zA-Z][a-zA-Z0-9]*
 STRING          = \"[a-zA-Z]*\"
 
-// הגדרת קבוצת התווים המותרים בתוך הערות לפי איור 2
+// Define the set of allowed characters inside comments according to Figure 2
 CommentChar     = [a-zA-Z0-9\ \t\r\n\(\)\[\]\{\}\?\!\+\-\*\/\.\;]
 
-// מצבים לקסיקליים לטיפול בהערות
+// Lexical states for handling comments
 %state LINE_COMMENT
 %state BLOCK_COMMENT
 
 %%
 
 <YYINITIAL> {
-    // מעברים למצבי הערות
+    // Transitions to comment states
     "//"                { yybegin(LINE_COMMENT); }
     "/*"                { yybegin(BLOCK_COMMENT); }
 
@@ -76,7 +76,7 @@ CommentChar     = [a-zA-Z0-9\ \t\r\n\(\)\[\]\{\}\?\!\+\-\*\/\.\;]
     "or"                { return symbol(TokenNames.OR);}
 
     // Literals, Identifiers, and Error cases
-    0[0-9]+             { return symbol(TokenNames.ERROR); }
+    0[0-9]+             { return symbol(TokenNames.ERROR); /* Catch leading zeros */ }
     {STRING}            { return symbol(TokenNames.STRING, yytext()); }
     {INTEGER}           { 
                             long val = Long.parseLong(yytext());
@@ -86,22 +86,22 @@ CommentChar     = [a-zA-Z0-9\ \t\r\n\(\)\[\]\{\}\?\!\+\-\*\/\.\;]
                             return symbol(TokenNames.INT, Integer.valueOf(yytext()));
                         }
     {ID}                { return symbol(TokenNames.ID, yytext());}
-    {WhiteSpace}        { /* just skip */ }
+    {WhiteSpace}        { /* just skip what was found, do nothing */ }
 
     <<EOF>>             { return symbol(TokenNames.EOF);}
     [^]                 { return symbol(TokenNames.ERROR);}
 }
 
 <LINE_COMMENT> {
-    {LineTerminator}    { yybegin(YYINITIAL); /* חזרה למצב רגיל בסוף שורה */ }
-    {CommentChar}       { /* התעלמות מתווים חוקיים */ }
-    [^]                 { return symbol(TokenNames.ERROR); /* תו לא חוקי בהערה */ }
+    {LineTerminator}    { yybegin(YYINITIAL); /* Return to initial state at end of line */ }
+    {CommentChar}       { /* Ignore allowed characters */ }
+    [^]                 { return symbol(TokenNames.ERROR); /* Invalid character in comment */ }
     <<EOF>>             { return symbol(TokenNames.EOF); }
 }
 
 <BLOCK_COMMENT> {
-    "*/"                { yybegin(YYINITIAL); /* סיום הערת בלוק */ }
-    {CommentChar}       { /* התעלמות מתווים חוקיים */ }
-    [^]                 { return symbol(TokenNames.ERROR); /* תו לא חוקי בהערה */ }
-    <<EOF>>             { return symbol(TokenNames.ERROR); /* שגיאה: הגענו לסוף קובץ וההערה לא נסגרה */ }
+    "*/"                { yybegin(YYINITIAL); /* End of block comment */ }
+    {CommentChar}       { /* Ignore allowed characters */ }
+    [^]                 { return symbol(TokenNames.ERROR); /* Invalid character in comment */ }
+    <<EOF>>             { return symbol(TokenNames.ERROR); /* Error: Reached EOF but block comment was not closed */ }
 }

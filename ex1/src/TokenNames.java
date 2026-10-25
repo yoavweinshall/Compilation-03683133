@@ -43,5 +43,7 @@ public interface TokenNames {
     public static final int ID = 32;
     public static final int INT = 33; 
     public static final int STRING = 34;
+
+    // Lexical Error Token
     public static final int ERROR = 35;
 }

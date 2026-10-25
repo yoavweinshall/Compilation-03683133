@@ -4,7 +4,7 @@ import java_cup.runtime.Symbol;
 
 public class Main {
 
-    // פונקציית עזר להמרת ה-ID של הטוקן למחרוזת עבור ההדפסה
+    // Helper function to convert the Token ID to its string representation for printing
     private static String getTokenName(int sym) {
         switch (sym) {
             case TokenNames.PLUS: return "PLUS";
@@ -62,7 +62,7 @@ public class Main {
             s = l.next_token();
 
             while (s.sym != TokenNames.EOF) {
-                // מנגנון תפיסת השגיאות הלקסיקליות
+                // Lexical error handling mechanism: Truncate file and write ERROR
                 if (s.sym == TokenNames.ERROR) {
                     fileWriter.close();
                     fileWriter = new PrintWriter(outputFileName);
@@ -74,11 +74,11 @@ public class Main {
                 String tokenName = getTokenName(s.sym);
                 String outputLine = "";
 
-                // הדפסה עבור טוקנים בעלי ערך
+                // Print format for tokens with values (e.g., ID, INT, STRING)
                 if (s.sym == TokenNames.ID || s.sym == TokenNames.INT || s.sym == TokenNames.STRING) {
                     outputLine = tokenName + "(" + s.value + ")[" + l.getLine() + "," + l.getTokenStartPosition() + "]";
                 } 
-                // הדפסה עבור טוקנים ללא ערך
+                // Print format for tokens without values
                 else {
                     outputLine = tokenName + "[" + l.getLine() + "," + l.getTokenStartPosition() + "]";
                 }
@@ -92,6 +92,7 @@ public class Main {
             l.yyclose();
             fileWriter.close();
         } catch (Exception e) {
+            // Fallback error handling in case of unexpected exceptions
             try {
                 PrintWriter errorWriter = new PrintWriter(outputFileName);
                 errorWriter.print("ERROR\n");
