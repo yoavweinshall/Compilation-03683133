@@ -17,8 +17,7 @@ find . -type f \
     -not -name '*.zip' \
     -not -name '*.pdf' \
     -not -name '*.o' \
-    -not -name '*.out' \
-    -not -name "$OUTPUT" |
+    -not -name '*.out' |
 while IFS= read -r file; do
     printf '\n=======\n%s\n========\n' "$file" >> "$OUTPUT"
     cat "$file" >> "$OUTPUT"
