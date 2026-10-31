@@ -37,7 +37,7 @@ CommentChar     = [a-zA-Z0-9\ \t\r\n\(\)\[\]\{\}\?\!\+\-\*\/\.\;]
 
 <YYINITIAL> {
     // Transitions to comment states
-    "//"                { yybegin(LINE_COMMENT); }
+    "//" / [^\r\n]* {LineTerminator}   { yybegin(LINE_COMMENT); }
     "/*"                { yybegin(BLOCK_COMMENT); }
 
     // Operators & Punctuation
