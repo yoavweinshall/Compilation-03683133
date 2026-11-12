@@ -1,0 +1,121 @@
+/*************/
+/* IMPORT(S) */
+/*************/
+import java_cup.runtime.*;
+import ast.*;
+
+parser code 
+{:
+	public Lexer lexer;
+
+	public Parser(Lexer lexer)
+	{
+		super(lexer);
+		this.lexer = lexer;
+	}
+	public void report_error(String message, Object info)
+	{
+		System.out.print("ERROR >> ");		
+		System.out.print("[");
+		System.out.print(lexer.getLine());
+		System.out.print(":");
+		System.out.print(lexer.getTokenStartPosition());
+		System.out.print("] ");		
+		System.exit(0);
+	}
+:}
+
+/************************/
+/* CUSTOMIZE CUP PARSER */
+/************************/
+scan with
+{:
+	Symbol s;
+	s = lexer.next_token();
+	//System.out.print(s.sym);
+	System.out.print("[");
+	System.out.print(lexer.getLine());
+	System.out.print(":");
+	System.out.print(lexer.getTokenStartPosition());
+	System.out.print("] ");
+	System.out.print(TokenNames.terminalNames[s.sym]);
+	if (s.value != null)
+	{
+		System.out.print("( ");
+		System.out.print(s.value);
+		System.out.print(" )");
+	}
+	System.out.print("\n");
+	return s; 
+:};
+
+/*************/
+/* TERMINALS */
+/*************/
+terminal IF;
+terminal EQ;
+terminal DOT;
+terminal PLUS;
+terminal MINUS;
+terminal TIMES;
+terminal WHILE;
+terminal DIVIDE;
+terminal LPAREN;
+terminal RPAREN;
+terminal LBRACK;
+terminal RBRACK;
+terminal LBRACE;
+terminal RBRACE;
+terminal SEMICOLON;
+terminal ASSIGN;
+
+/*************/
+/* TERMINALS */
+/*************/
+terminal Integer INT;
+terminal String ID;
+
+/*****************/
+/* NON TERMINALS */
+/*****************/
+non terminal AstExp exp;
+non terminal AstVar var;
+non terminal AstStmt stmt;
+non terminal AstStmtList stmtList;
+
+/***********************/
+/* OPERATOR PRECEDENCE */
+/***********************/
+precedence left PLUS;
+precedence left MINUS;
+precedence left TIMES;
+precedence left DIVIDE;
+
+/************************/
+/* START WITH: stmtList */
+/************************/
+start with stmtList;
+
+/********************/
+/* DERIVATION RULES */
+/********************/
+
+stmtList	::=		stmt:s	stmtList:l		{: RESULT = new AstStmtList(s,l);    :}
+					| stmt:s				{: RESULT = new AstStmtList(s,null); :}
+					;
+
+var			::=		ID:name								{: RESULT = new AstVarSimple(name);       :}
+					| var:v DOT ID:fieldName			{: RESULT = new AstVarField(v,fieldName); :}
+					| var:v LBRACK exp:e RBRACK			{: RESULT = new AstVarSubscript(v,e);     :}
+					;
+					
+stmt		::=		var:v ASSIGN exp:e SEMICOLON								{: RESULT = new AstStmtAssign(v,e); :}
+					| IF    LPAREN exp:cond RPAREN LBRACE stmtList:body RBRACE	{: RESULT = new AstStmtIf(   cond,body); :}
+					| WHILE LPAREN exp:cond RPAREN LBRACE stmtList:body RBRACE	{: RESULT = new AstStmtWhile(cond,body); :}
+					;
+
+exp			::=		INT:i								{: RESULT = new AstExpInt(i);          :}
+					| var:v								{: RESULT = new AstExpVar(v);          :}
+					| exp:e1 PLUS  exp:e2				{: RESULT = new AstExpBinop(e1, e2, 0);:}
+					| exp:e1 MINUS exp:e2				{: RESULT = new AstExpBinop(e1, e2, 1);:}
+					;
