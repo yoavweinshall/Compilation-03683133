@@ -13,15 +13,24 @@ parser code
 		super(lexer);
 		this.lexer = lexer;
 	}
+
 	public void report_error(String message, Object info)
 	{
-		System.out.print("ERROR >> ");		
-		System.out.print("[");
-		System.out.print(lexer.getLine());
-		System.out.print(":");
-		System.out.print(lexer.getTokenStartPosition());
-		System.out.print("] ");		
-		System.exit(0);
+		int line = lexer.getLine();
+		if (info instanceof Symbol)
+		{
+			Symbol s = (Symbol) info;
+			if (s.left >= 0)
+			{
+				line = s.left + 1;
+			}
+		}
+		throw new RuntimeException(String.valueOf(line));
+	}
+
+	public void syntax_error(Symbol cur_token)
+	{
+		report_error("Syntax error", cur_token);
 	}
 :}
 
@@ -32,7 +41,6 @@ scan with
 {:
 	Symbol s;
 	s = lexer.next_token();
-	//System.out.print(s.sym);
 	System.out.print("[");
 	System.out.print(lexer.getLine());
 	System.out.print(":");
@@ -52,70 +60,93 @@ scan with
 /*************/
 /* TERMINALS */
 /*************/
-terminal IF;
-terminal EQ;
-terminal DOT;
+/* Operators */
 terminal PLUS;
 terminal MINUS;
 terminal TIMES;
-terminal WHILE;
 terminal DIVIDE;
+terminal EQ;
+terminal LT;
+terminal GT;
+terminal AND;
+terminal OR;
+terminal ASSIGN;
+
+/* Punctuation */
 terminal LPAREN;
 terminal RPAREN;
 terminal LBRACK;
 terminal RBRACK;
 terminal LBRACE;
 terminal RBRACE;
+terminal COMMA;
+terminal DOT;
 terminal SEMICOLON;
-terminal ASSIGN;
 
-/*************/
-/* TERMINALS */
-/*************/
+/* Keywords */
+terminal ARRAY;
+terminal CLASS;
+terminal EXTENDS;
+terminal NEW;
+terminal NIL;
+terminal IF;
+terminal ELSE;
+terminal WHILE;
+terminal RETURN;
+terminal TYPE_INT;
+terminal TYPE_STRING;
+terminal TYPE_VOID;
+
+/* Terminals with values */
 terminal Integer INT;
 terminal String ID;
+terminal String STRING;
 
 /*****************/
 /* NON TERMINALS */
 /*****************/
-non terminal AstExp exp;
-non terminal AstVar var;
-non terminal AstStmt stmt;
+non terminal AstProgram program;
+non terminal AstDecList decList;
+non terminal AstDec dec;
+non terminal AstType type;
+non terminal AstDecVar varDec;
+non terminal AstDecFunc funcDec;
+non terminal AstParamList paramList;
+non terminal AstDecClass classDec;
+non terminal AstDecList cFieldList;
+non terminal AstDec cField;
+non terminal AstDecArray arrayTypedef;
 non terminal AstStmtList stmtList;
+non terminal AstStmt stmt;
+non terminal AstExp exp;
+non terminal AstExpNew newExp;
+non terminal AstExpCall callExp;
+non terminal AstExpList expList;
+non terminal AstVar var;
 
-/***********************/
-/* OPERATOR PRECEDENCE */
-/***********************/
-precedence left PLUS;
-precedence left MINUS;
-precedence left TIMES;
-precedence left DIVIDE;
+/*******************************************************/
+/* OPERATOR PRECEDENCE (Lowest = 1 to Highest = 10)    */
+/*******************************************************/
+precedence nonassoc ASSIGN;
+precedence left OR;
+precedence left AND;
+precedence left EQ;
+precedence left LT, GT;
+precedence left PLUS, MINUS;
+precedence left TIMES, DIVIDE;
+precedence left LBRACK;
+precedence nonassoc LPAREN;
+precedence left DOT;
 
-/************************/
-/* START WITH: stmtList */
-/************************/
-start with stmtList;
+/**********************/
+/* START WITH: program */
+/**********************/
+start with program;
 
 /********************/
 /* DERIVATION RULES */
 /********************/
-
-stmtList	::=		stmt:s	stmtList:l		{: RESULT = new AstStmtList(s,l);    :}
-					| stmt:s				{: RESULT = new AstStmtList(s,null); :}
-					;
-
-var			::=		ID:name								{: RESULT = new AstVarSimple(name);       :}
-					| var:v DOT ID:fieldName			{: RESULT = new AstVarField(v,fieldName); :}
-					| var:v LBRACK exp:e RBRACK			{: RESULT = new AstVarSubscript(v,e);     :}
-					;
-					
-stmt		::=		var:v ASSIGN exp:e SEMICOLON								{: RESULT = new AstStmtAssign(v,e); :}
-					| IF    LPAREN exp:cond RPAREN LBRACE stmtList:body RBRACE	{: RESULT = new AstStmtIf(   cond,body); :}
-					| WHILE LPAREN exp:cond RPAREN LBRACE stmtList:body RBRACE	{: RESULT = new AstStmtWhile(cond,body); :}
-					;
-
-exp			::=		INT:i								{: RESULT = new AstExpInt(i);          :}
-					| var:v								{: RESULT = new AstExpVar(v);          :}
-					| exp:e1 PLUS  exp:e2				{: RESULT = new AstExpBinop(e1, e2, 0);:}
-					| exp:e1 MINUS exp:e2				{: RESULT = new AstExpBinop(e1, e2, 1);:}
-					;
+/* Placeholder rules - will be completed in Subtask 4b */
+program     ::= decList:l {: RESULT = new AstProgram(l); :};
+decList     ::= dec:d {: RESULT = new AstDecList(d, null); :};
+dec         ::= varDec:v {: RESULT = v; :};
