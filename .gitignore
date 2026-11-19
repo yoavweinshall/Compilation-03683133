@@ -1,18 +1,29 @@
 # macOS system files
 .DS_Store
 
-# Compiled Object files and executables
-*.o
-*.out
-*.exe
-build/
-codebase_ex1.txt
-bin/
-LEXER
-src/Lexer.java
-
 # IDE directories
 .vscode/
 .idea/
 
+# Compiled files and build directories
+*.class
+*.o
+*.out
+*.exe
+bin/
+build/
 
+# Generated compiler executables
+LEXER
+PARSER
+
+# JFlex and CUP auto-generated Java files
+**/src/Lexer.java
+**/src/Parser.java
+**/src/TokenNames.java
+!ex1/src/TokenNames.java
+
+# Debug and helper artifacts
+**/output/AST_IN_GRAPHVIZ_DOT_FORMAT.txt
+**/output/ast.jpeg
+codebase_ex*.txt
