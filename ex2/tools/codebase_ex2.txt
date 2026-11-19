@@ -1,610 +1,5 @@
 
 =======
-./cup/CUP_FILE.cup
-========
-/*************/
-/* IMPORT(S) */
-/*************/
-import java_cup.runtime.*;
-import ast.*;
-
-parser code 
-{:
-	public Lexer lexer;
-
-	public Parser(Lexer lexer)
-	{
-		super(lexer);
-		this.lexer = lexer;
-	}
-	public void report_error(String message, Object info)
-	{
-		System.out.print("ERROR >> ");		
-		System.out.print("[");
-		System.out.print(lexer.getLine());
-		System.out.print(":");
-		System.out.print(lexer.getTokenStartPosition());
-		System.out.print("] ");		
-		System.exit(0);
-	}
-:}
-
-/************************/
-/* CUSTOMIZE CUP PARSER */
-/************************/
-scan with
-{:
-	Symbol s;
-	s = lexer.next_token();
-	//System.out.print(s.sym);
-	System.out.print("[");
-	System.out.print(lexer.getLine());
-	System.out.print(":");
-	System.out.print(lexer.getTokenStartPosition());
-	System.out.print("] ");
-	System.out.print(TokenNames.terminalNames[s.sym]);
-	if (s.value != null)
-	{
-		System.out.print("( ");
-		System.out.print(s.value);
-		System.out.print(" )");
-	}
-	System.out.print("\n");
-	return s; 
-:};
-
-/*************/
-/* TERMINALS */
-/*************/
-terminal IF;
-terminal EQ;
-terminal DOT;
-terminal PLUS;
-terminal MINUS;
-terminal TIMES;
-terminal WHILE;
-terminal DIVIDE;
-terminal LPAREN;
-terminal RPAREN;
-terminal LBRACK;
-terminal RBRACK;
-terminal LBRACE;
-terminal RBRACE;
-terminal SEMICOLON;
-terminal ASSIGN;
-
-/*************/
-/* TERMINALS */
-/*************/
-terminal Integer INT;
-terminal String ID;
-
-/*****************/
-/* NON TERMINALS */
-/*****************/
-non terminal AstExp exp;
-non terminal AstVar var;
-non terminal AstStmt stmt;
-non terminal AstStmtList stmtList;
-
-/***********************/
-/* OPERATOR PRECEDENCE */
-/***********************/
-precedence left PLUS;
-precedence left MINUS;
-precedence left TIMES;
-precedence left DIVIDE;
-
-/************************/
-/* START WITH: stmtList */
-/************************/
-start with stmtList;
-
-/********************/
-/* DERIVATION RULES */
-/********************/
-
-stmtList	::=		stmt:s	stmtList:l		{: RESULT = new AstStmtList(s,l);    :}
-					| stmt:s				{: RESULT = new AstStmtList(s,null); :}
-					;
-
-var			::=		ID:name								{: RESULT = new AstVarSimple(name);       :}
-					| var:v DOT ID:fieldName			{: RESULT = new AstVarField(v,fieldName); :}
-					| var:v LBRACK exp:e RBRACK			{: RESULT = new AstVarSubscript(v,e);     :}
-					;
-					
-stmt		::=		var:v ASSIGN exp:e SEMICOLON								{: RESULT = new AstStmtAssign(v,e); :}
-					| IF    LPAREN exp:cond RPAREN LBRACE stmtList:body RBRACE	{: RESULT = new AstStmtIf(   cond,body); :}
-					| WHILE LPAREN exp:cond RPAREN LBRACE stmtList:body RBRACE	{: RESULT = new AstStmtWhile(cond,body); :}
-					;
-
-exp			::=		INT:i								{: RESULT = new AstExpInt(i);          :}
-					| var:v								{: RESULT = new AstExpVar(v);          :}
-					| exp:e1 PLUS  exp:e2				{: RESULT = new AstExpBinop(e1, e2, 0);:}
-					| exp:e1 MINUS exp:e2				{: RESULT = new AstExpBinop(e1, e2, 1);:}
-					;
-
-=======
-./input/TEST_06_Print_Primes_Error.txt
-========
-int IsPrime(int p)
-{
-    int i := 2;
-    int j := 2;
-    
-    while (i<p)
-    {
-        while (j<p)
-        {
-            if (i*j = p)
-            {
-                 return 1;
-            }
-            j := j+1;
-        }
-        i := i+1;
-    }
-    return 0;
-}
-
-void PrintPrimes(int start,)
-{
-    int p := 2;
-    
-    while (p < end+1)
-    {
-        if (IsPrime(p))
-        {
-            PrintInt(p);
-        }
-    }
-}
-
-void main(void)
-{
-    PrintPrimes(2,100);
-}
-
-=======
-./input/TEST_03_Merge_Lists.txt
-========
-class IntList
-{
-    int head;
-    IntList tail;
-}
-
-IntList MergeLists(IntList l1, IntList l2)
-{
-    if (l1 = nil)
-    {
-        return l2;
-    }
-    if (l2 = nil)
-    {
-        return l1;
-    }
-    
-    if (l1.head < l2.head)
-    {
-        IntList l3 := l1;
-        l3.tail := MergeLists(l1.tail,l2);
-        return l3;
-    }
-    
-    if (l2.head < l1.head)
-    {
-        IntList l3 := l2;
-        l3.tail := MergeLists(l1,l2.tail);
-        return l3;
-    }
-    
-    /**************************************************/
-    /* Execution falls off here ... what should we do */
-    /**************************************************/
-}
-
-void main()
-{
-    IntList a := new IntList;
-    IntList b := new IntList;
-    IntList c := new IntList;
-    IntList d := new IntList;
-
-    IntList A := new IntList;
-    IntList B := new IntList;
-    IntList C := new IntList;
-    IntList D := new IntList;
-       
-    a.head := 34;
-    b.head := 70;
-    c.head := 92;
-    d.head := 96;
-
-    A.head := 12;
-    B.head := 50;
-    C.head := 97;
-    D.head := 99;
-
-    a.tail := b;
-    b.tail := c;
-    c.tail := d;
-    d.tail := nil;
-
-    A.tail := B;
-    B.tail := C;
-    C.tail := D;
-    D.tail := nil;
-    
-    IntList l := MergeLists(a,A);
-    
-    while (l)
-    {
-        PrintInt(l.head);
-        l := l.tail;
-    }
-}
-
-=======
-./input/TEST_02_Bubble_Sort.txt
-========
-array IntArray = int[];
-
-void BubbleSort(IntArray arr, int size)
-{
-    int i := 0;
-    int min := -32767;
-    int minIndex := -1;
-    
-    while (i < size)
-    {
-        int j := i+1;
-        while (j<size)
-        {
-            if (arr[j] < min)
-            {
-                int i := arr[minIndex];
-                arr[minIndex] := arr[j];
-                arr[j] := i;
-            }
-        }
-    }
-}
-
-void main()
-{
-    IntArray arr := new int[7];
-    
-    arr[0] := 34;
-    arr[1] := 12;
-    arr[2] := -600;
-    arr[3] := -400;
-    arr[4] := 70;
-    arr[5] := 30;
-    arr[6] := -580;
-    
-    PrintPrimes(2,100);
-}
-
-
-=======
-./input/TEST_08_Merge_Lists_Error.txt
-========
-class IntList
-{
-    int head;
-    IntList tail;
-}
-
-IntList MergeLists(IntList l1, int l2[])
-{
-    if (l1 = nil)
-    {
-        return l2;
-    }
-    if (l2 = nil)
-    {
-        return l1;
-    }
-    
-    if (l1.head < l2.head)
-    {
-        IntList l3 := l1;
-        l3.tail := MergeLists(l1.tail,l2);
-        return l3;
-    }
-    
-    if (l2.head < l1.head)
-    {
-        IntList l3 := l2;
-        l3.tail := MergeLists(l1,l2.tail);
-        return l3;
-    }
-    
-    /**************************************************/
-    /* Execution falls off here ... what should we do */
-    /**************************************************/
-}
-
-void main()
-{
-    IntList a := new IntList;
-    IntList b := new IntList;
-    IntList c := new IntList;
-    IntList d := new IntList;
-
-    IntList A := new IntList;
-    IntList B := new IntList;
-    IntList C := new IntList;
-    IntList D := new IntList;
-       
-    a.head := 34;
-    b.head := 70;
-    c.head := 92;
-    d.head := 96;
-
-    A.head := 12;
-    B.head := 50;
-    C.head := 97;
-    D.head := 99;
-
-    a.tail := b;
-    b.tail := c;
-    c.tail := d;
-    d.tail := nil;
-
-    A.tail := B;
-    B.tail := C;
-    C.tail := D;
-    D.tail := nil;
-    
-    IntList l := MergeLists(a,A);
-    
-    while (l)
-    {
-        PrintInt(l.head);
-        l := l.tail;
-    }
-}
-
-=======
-./input/Input.txt
-========
-GIDI := 60;
-AVROOM := 55 + GIDI;
-JACOB.sons[11] := JOSEF;
-
-=======
-./input/TEST_01_Print_Primes.txt
-========
-int IsPrime(int p)
-{
-    int i := 2;
-    int j := 2;
-    
-    while (i<p)
-    {
-        while (j<p)
-        {
-            if (i*j = p)
-            {
-                 return 1;
-            }
-            j := j+1;
-        }
-        i := i+1;
-    }
-    return 0;
-}
-
-void PrintPrimes(int start, int end)
-{
-    int p := 2;
-    
-    while (p < end+1)
-    {
-        if (IsPrime(p))
-        {
-            PrintInt(p);
-        }
-    }
-}
-
-void main()
-{
-    PrintPrimes(2,100);
-}
-
-=======
-./input/TEST_07_Bubble_Sort_Error.txt
-========
-array IntArray = int[];
-
-void BubbleSort(IntArray arr, int size)
-{
-    int i := 0;
-    int min := -32767;
-    int minIndex := -1;
-    
-    while (i < size)
-    {
-        int j := i+;
-        while (j<size)
-        {
-            if (arr[j] < min)
-            {
-                int i := arr[minIndex];
-                arr[minIndex] := arr[j];
-                arr[j] := i;
-            }
-        }
-    }
-}
-
-void main()
-{
-    IntArray arr := new int[7];
-    
-    arr[0] := 34;
-    arr[1] := 12;
-    arr[2] := -600;
-    arr[3] := -400;
-    arr[4] := 70;
-    arr[5] := 30;
-    arr[6] := -580;
-    
-    PrintPrimes(2,100);
-}
-
-=======
-./input/TEST_05_Classes.txt
-========
-array IntArray = int[];
-
-class Person
-{
-	int ID;
-	int age;
-
-	IntArray lastYearSalaries;
-
-	int getAge()  { return age;   }
-	int birthday(){ age := age+1; }
-}
-
-class Student extends Person
-{
-	IntArray grades;
-	int getAverage()
-	{
-		int i := 0;
-		int sum := 0;
-		while (i<10)
-		{
-			sum := sum+grades[i];
-			i := i+1;
-		}
-		return sum/10;
-	}
-}
-
-void main()
-{
-	Student moish := new Student;
-	moish.grades := new int[10];
-	moish.lastYearSalaries := new int[12];
-	int COMPILATION := 6;
-
-	moish.grades[COMPILATION] := 99;
-
-	if (moish.getAverage() > 90)
-	{
-		// Bonus from parents for getting good grades
-		moish.lastYearSalaries[7] := moish.lastYearSalaries[7] + 1000;
-	}
-}
-
-=======
-./input/TEST_09_Matrices_Error.txt
-========
-array IntArray = int[];
-array Mat      = IntArray[];
-
-int trace3x3(Mat A)
-{
-	return return return;
-}
-
-void main()
-{
-	IntArray row0 := new int[3];
-	IntArray row1 := new int[3];
-	IntArray row2 := new int[3];
-
-	Mat A := new IntArray[3];
-
-	A[0][0]:=0;A[0][1]:=1;A[0][2]:=2;
-	A[1][0]:=3;A[1][1]:=4;A[1][2]:=5;
-	A[2][0]:=6;A[2][1]:=7;A[2][2]:=8;
-
-	PrintInt(trace3x3(A));
-}
-
-=======
-./input/TEST_04_Matrices.txt
-========
-array IntArray = int[];
-array Mat      = IntArray[];
-
-int trace3x3(Mat A)
-{
-	return A[0][0]+A[1][1]+A[2][2];
-}
-
-void main()
-{
-	IntArray row0 := new int[3];
-	IntArray row1 := new int[3];
-	IntArray row2 := new int[3];
-
-	Mat A := new IntArray[3];
-
-	A[0][0]:=0;A[0][1]:=1;A[0][2]:=2;
-	A[1][0]:=3;A[1][1]:=4;A[1][2]:=5;
-	A[2][0]:=6;A[2][1]:=7;A[2][2]:=8;
-
-	PrintInt(trace3x3(A));
-}
-
-=======
-./input/TEST_10_Classes_Error.txt
-========
-array IntArray = int[];
-
-class Person
-{
-	int ID;
-	int age;
-
-	IntArray lastYearSalaries;
-
-	int getAge()  { return age;   }
-	int birthday(){ age := age+1; }
-}
-
-class Student extends Person
-{
-	IntArray grades;
-	int getAverage()
-	{
-		int i := 0;
-		int sum := 0;
-		while (i<10)
-		{
-			sum := (sum+grades)[i];
-			i := i+1;
-		}
-		return sum/10;
-	}
-}
-
-void main()
-{
-	Student moish := new Student;
-	moish.grades := new int[10];
-	moish.lastYearSalaries := new int[12];
-	int COMPILATION := 6;
-
-	moish.grades[COMPILATION] := 99;
-
-	if (moish.getAverage() > 90)
-	{
-		// Bonus from parents for getting good grades
-		moish.lastYearSalaries[7] := moish.lastYearSalaries[7] + 1000;
-	}
-}
-
-=======
 ./Makefile
 ========
 ###############
@@ -752,6 +147,1118 @@ debug: all
 	@echo "************************************************"
 	eog ${OUTPUT_DIR}/ast.jpeg &
 =======
+./cup/CUP_FILE.cup
+========
+/*************/
+/* IMPORT(S) */
+/*************/
+import java_cup.runtime.*;
+import ast.*;
+
+parser code 
+{:
+	public Lexer lexer;
+
+	public Parser(Lexer lexer)
+	{
+		super(lexer);
+		this.lexer = lexer;
+	}
+
+	public void report_error(String message, Object info)
+	{
+		int line = lexer.getLine();
+		if (info instanceof Symbol)
+		{
+			Symbol s = (Symbol) info;
+			if (s.left >= 0)
+			{
+				line = s.left + 1;
+			}
+		}
+		throw new RuntimeException(String.valueOf(line));
+	}
+
+	public void syntax_error(Symbol cur_token)
+	{
+		report_error("Syntax error", cur_token);
+	}
+:}
+
+/************************/
+/* CUSTOMIZE CUP PARSER */
+/************************/
+scan with
+{:
+	Symbol s;
+	s = lexer.next_token();
+	System.out.print("[");
+	System.out.print(lexer.getLine());
+	System.out.print(":");
+	System.out.print(lexer.getTokenStartPosition());
+	System.out.print("] ");
+	System.out.print(TokenNames.terminalNames[s.sym]);
+	if (s.value != null)
+	{
+		System.out.print("( ");
+		System.out.print(s.value);
+		System.out.print(" )");
+	}
+	System.out.print("\n");
+	return s; 
+:};
+
+/*************/
+/* TERMINALS */
+/*************/
+/* Operators */
+terminal PLUS;
+terminal MINUS;
+terminal TIMES;
+terminal DIVIDE;
+terminal EQ;
+terminal LT;
+terminal GT;
+terminal AND;
+terminal OR;
+terminal ASSIGN;
+
+/* Punctuation */
+terminal LPAREN;
+terminal RPAREN;
+terminal LBRACK;
+terminal RBRACK;
+terminal LBRACE;
+terminal RBRACE;
+terminal COMMA;
+terminal DOT;
+terminal SEMICOLON;
+
+/* Keywords */
+terminal ARRAY;
+terminal CLASS;
+terminal EXTENDS;
+terminal NEW;
+terminal NIL;
+terminal IF;
+terminal ELSE;
+terminal WHILE;
+terminal RETURN;
+terminal TYPE_INT;
+terminal TYPE_STRING;
+terminal TYPE_VOID;
+
+/* Terminals with values */
+terminal Integer INT;
+terminal String ID;
+terminal String STRING;
+
+/*****************/
+/* NON TERMINALS */
+/*****************/
+non terminal AstProgram program;
+non terminal AstDecList decList;
+non terminal AstDec dec;
+non terminal AstType type;
+non terminal AstDecVar varDec;
+non terminal AstDecFunc funcDec;
+non terminal AstParamList paramList;
+non terminal AstDecClass classDec;
+non terminal AstDecList cFieldList;
+non terminal AstDec cField;
+non terminal AstDecArray arrayTypedef;
+non terminal AstStmtList stmtList;
+non terminal AstStmt stmt;
+non terminal AstExp exp;
+non terminal AstExpNew newExp;
+non terminal AstExpCall callExp;
+non terminal AstExpList expList;
+non terminal AstVar var;
+
+/*******************************************************/
+/* OPERATOR PRECEDENCE (Lowest = 1 to Highest = 10)    */
+/*******************************************************/
+precedence nonassoc ASSIGN;
+precedence left OR;
+precedence left AND;
+precedence left EQ;
+precedence left LT, GT;
+precedence left PLUS, MINUS;
+precedence left TIMES, DIVIDE;
+precedence left LBRACK;
+precedence nonassoc LPAREN;
+precedence left DOT;
+
+/**********************/
+/* START WITH: program */
+/**********************/
+start with program;
+
+/********************/
+/* DERIVATION RULES */
+/********************/
+
+program         ::= decList:l
+                    {:
+                        RESULT = new AstProgram(l);
+                        RESULT.lineNumber = lleft + 1;
+                    :}
+                    ;
+
+decList         ::= dec:d decList:l
+                    {:
+                        RESULT = new AstDecList(d, l);
+                        RESULT.lineNumber = dleft + 1;
+                    :}
+                    | dec:d
+                    {:
+                        RESULT = new AstDecList(d, null);
+                        RESULT.lineNumber = dleft + 1;
+                    :}
+                    ;
+
+dec             ::= varDec:v        {: RESULT = v; :}
+                    | funcDec:f     {: RESULT = f; :}
+                    | classDec:c    {: RESULT = c; :}
+                    | arrayTypedef:a {: RESULT = a; :}
+                    ;
+
+type            ::= TYPE_INT:t
+                    {:
+                        RESULT = new AstType("int");
+                        RESULT.lineNumber = tleft + 1;
+                    :}
+                    | TYPE_STRING:t
+                    {:
+                        RESULT = new AstType("string");
+                        RESULT.lineNumber = tleft + 1;
+                    :}
+                    | TYPE_VOID:t
+                    {:
+                        RESULT = new AstType("void");
+                        RESULT.lineNumber = tleft + 1;
+                    :}
+                    | ID:name
+                    {:
+                        RESULT = new AstType(name);
+                        RESULT.lineNumber = nameleft + 1;
+                    :}
+                    ;
+
+varDec          ::= type:t ID:name SEMICOLON
+                    {:
+                        RESULT = new AstDecVar(t, name, null);
+                        RESULT.lineNumber = tleft + 1;
+                    :}
+                    | type:t ID:name ASSIGN exp:e SEMICOLON
+                    {:
+                        RESULT = new AstDecVar(t, name, e);
+                        RESULT.lineNumber = tleft + 1;
+                    :}
+                    | type:t ID:name ASSIGN newExp:e SEMICOLON
+                    {:
+                        RESULT = new AstDecVar(t, name, e);
+                        RESULT.lineNumber = tleft + 1;
+                    :}
+                    ;
+
+funcDec         ::= type:t ID:name LPAREN RPAREN LBRACE stmtList:body RBRACE
+                    {:
+                        RESULT = new AstDecFunc(t, name, null, body);
+                        RESULT.lineNumber = tleft + 1;
+                    :}
+                    | type:t ID:name LPAREN paramList:params RPAREN LBRACE stmtList:body RBRACE
+                    {:
+                        RESULT = new AstDecFunc(t, name, params, body);
+                        RESULT.lineNumber = tleft + 1;
+                    :}
+                    ;
+
+paramList       ::= type:t ID:name COMMA paramList:l
+                    {:
+                        RESULT = new AstParamList(t, name, l);
+                        RESULT.lineNumber = tleft + 1;
+                    :}
+                    | type:t ID:name
+                    {:
+                        RESULT = new AstParamList(t, name, null);
+                        RESULT.lineNumber = tleft + 1;
+                    :}
+                    ;
+
+classDec        ::= CLASS:c ID:name LBRACE cFieldList:fields RBRACE
+                    {:
+                        RESULT = new AstDecClass(name, null, fields);
+                        RESULT.lineNumber = cleft + 1;
+                    :}
+                    | CLASS:c ID:name EXTENDS ID:parent LBRACE cFieldList:fields RBRACE
+                    {:
+                        RESULT = new AstDecClass(name, parent, fields);
+                        RESULT.lineNumber = cleft + 1;
+                    :}
+                    ;
+
+cFieldList      ::= cField:f cFieldList:l
+                    {:
+                        RESULT = new AstDecList(f, l);
+                        RESULT.lineNumber = fleft + 1;
+                    :}
+                    | cField:f
+                    {:
+                        RESULT = new AstDecList(f, null);
+                        RESULT.lineNumber = fleft + 1;
+                    :}
+                    ;
+
+cField          ::= varDec:v        {: RESULT = v; :}
+                    | funcDec:f     {: RESULT = f; :}
+                    ;
+
+arrayTypedef    ::= ARRAY:a ID:name EQ type:t LBRACK RBRACK SEMICOLON
+                    {:
+                        RESULT = new AstDecArray(name, t);
+                        RESULT.lineNumber = aleft + 1;
+                    :}
+                    ;
+
+stmtList        ::= stmt:s stmtList:l
+                    {:
+                        RESULT = new AstStmtList(s, l);
+                        RESULT.lineNumber = sleft + 1;
+                    :}
+                    | stmt:s
+                    {:
+                        RESULT = new AstStmtList(s, null);
+                        RESULT.lineNumber = sleft + 1;
+                    :}
+                    ;
+
+stmt            ::= varDec:v
+                    {:
+                        RESULT = new AstStmtVarDec(v);
+                        RESULT.lineNumber = vleft + 1;
+                    :}
+                    | var:v ASSIGN exp:e SEMICOLON
+                    {:
+                        RESULT = new AstStmtAssign(v, e);
+                        RESULT.lineNumber = vleft + 1;
+                    :}
+                    | var:v ASSIGN newExp:e SEMICOLON
+                    {:
+                        RESULT = new AstStmtAssign(v, e);
+                        RESULT.lineNumber = vleft + 1;
+                    :}
+                    | RETURN:r SEMICOLON
+                    {:
+                        RESULT = new AstStmtReturn(null);
+                        RESULT.lineNumber = rleft + 1;
+                    :}
+                    | RETURN:r exp:e SEMICOLON
+                    {:
+                        RESULT = new AstStmtReturn(e);
+                        RESULT.lineNumber = rleft + 1;
+                    :}
+                    | IF:i LPAREN exp:cond RPAREN LBRACE stmtList:body RBRACE
+                    {:
+                        RESULT = new AstStmtIf(cond, body, null);
+                        RESULT.lineNumber = ileft + 1;
+                    :}
+                    | IF:i LPAREN exp:cond RPAREN LBRACE stmtList:body RBRACE ELSE LBRACE stmtList:elseBody RBRACE
+                    {:
+                        RESULT = new AstStmtIf(cond, body, elseBody);
+                        RESULT.lineNumber = ileft + 1;
+                    :}
+                    | WHILE:w LPAREN exp:cond RPAREN LBRACE stmtList:body RBRACE
+                    {:
+                        RESULT = new AstStmtWhile(cond, body);
+                        RESULT.lineNumber = wleft + 1;
+                    :}
+                    | callExp:c SEMICOLON
+                    {:
+                        RESULT = new AstStmtCall(c);
+                        RESULT.lineNumber = cleft + 1;
+                    :}
+                    ;
+
+exp             ::= var:v
+                    {:
+                        RESULT = new AstExpVar(v);
+                        RESULT.lineNumber = vleft + 1;
+                    :}
+                    | LPAREN exp:e RPAREN
+                    {:
+                        RESULT = e;
+                    :}
+                    | exp:e1 PLUS exp:e2
+                    {:
+                        RESULT = new AstExpBinop(e1, e2, 0);
+                        RESULT.lineNumber = e1left + 1;
+                    :}
+                    | exp:e1 MINUS exp:e2
+                    {:
+                        RESULT = new AstExpBinop(e1, e2, 1);
+                        RESULT.lineNumber = e1left + 1;
+                    :}
+                    | exp:e1 TIMES exp:e2
+                    {:
+                        RESULT = new AstExpBinop(e1, e2, 2);
+                        RESULT.lineNumber = e1left + 1;
+                    :}
+                    | exp:e1 DIVIDE exp:e2
+                    {:
+                        RESULT = new AstExpBinop(e1, e2, 3);
+                        RESULT.lineNumber = e1left + 1;
+                    :}
+                    | exp:e1 LT exp:e2
+                    {:
+                        RESULT = new AstExpBinop(e1, e2, 4);
+                        RESULT.lineNumber = e1left + 1;
+                    :}
+                    | exp:e1 GT exp:e2
+                    {:
+                        RESULT = new AstExpBinop(e1, e2, 5);
+                        RESULT.lineNumber = e1left + 1;
+                    :}
+                    | exp:e1 EQ exp:e2
+                    {:
+                        RESULT = new AstExpBinop(e1, e2, 6);
+                        RESULT.lineNumber = e1left + 1;
+                    :}
+                    | exp:e1 AND exp:e2
+                    {:
+                        RESULT = new AstExpBinop(e1, e2, 7);
+                        RESULT.lineNumber = e1left + 1;
+                    :}
+                    | exp:e1 OR exp:e2
+                    {:
+                        RESULT = new AstExpBinop(e1, e2, 8);
+                        RESULT.lineNumber = e1left + 1;
+                    :}
+                    | callExp:c
+                    {:
+                        RESULT = c;
+                    :}
+                    | INT:i
+                    {:
+                        RESULT = new AstExpInt(i);
+                        RESULT.lineNumber = ileft + 1;
+                    :}
+                    | MINUS:m INT:i
+                    {:
+                        RESULT = new AstExpInt(-i);
+                        RESULT.lineNumber = mleft + 1;
+                    :}
+                    | NIL:n
+                    {:
+                        RESULT = new AstExpNil();
+                        RESULT.lineNumber = nleft + 1;
+                    :}
+                    | STRING:s
+                    {:
+                        RESULT = new AstExpString(s);
+                        RESULT.lineNumber = sleft + 1;
+                    :}
+                    ;
+
+newExp          ::= NEW:n type:t
+                    {:
+                        RESULT = new AstExpNew(t, null);
+                        RESULT.lineNumber = nleft + 1;
+                    :}
+                    | NEW:n type:t LBRACK exp:e RBRACK
+                    {:
+                        RESULT = new AstExpNew(t, e);
+                        RESULT.lineNumber = nleft + 1;
+                    :}
+                    ;
+
+callExp         ::= ID:name LPAREN RPAREN
+                    {:
+                        RESULT = new AstExpCall(null, name, null);
+                        RESULT.lineNumber = nameleft + 1;
+                    :}
+                    | ID:name LPAREN expList:args RPAREN
+                    {:
+                        RESULT = new AstExpCall(null, name, args);
+                        RESULT.lineNumber = nameleft + 1;
+                    :}
+                    | var:v DOT ID:name LPAREN RPAREN
+                    {:
+                        RESULT = new AstExpCall(v, name, null);
+                        RESULT.lineNumber = vleft + 1;
+                    :}
+                    | var:v DOT ID:name LPAREN expList:args RPAREN
+                    {:
+                        RESULT = new AstExpCall(v, name, args);
+                        RESULT.lineNumber = vleft + 1;
+                    :}
+                    ;
+
+expList         ::= exp:e COMMA expList:l
+                    {:
+                        RESULT = new AstExpList(e, l);
+                        RESULT.lineNumber = eleft + 1;
+                    :}
+                    | exp:e
+                    {:
+                        RESULT = new AstExpList(e, null);
+                        RESULT.lineNumber = eleft + 1;
+                    :}
+                    ;
+
+var             ::= ID:name
+                    {:
+                        RESULT = new AstVarSimple(name);
+                        RESULT.lineNumber = nameleft + 1;
+                    :}
+                    | var:v DOT ID:fieldName
+                    {:
+                        RESULT = new AstVarField(v, fieldName);
+                        RESULT.lineNumber = vleft + 1;
+                    :}
+                    | var:v LBRACK exp:e RBRACK
+                    {:
+                        RESULT = new AstVarSubscript(v, e);
+                        RESULT.lineNumber = vleft + 1;
+                    :}
+                    ;
+=======
+./expected_output/TEST_01_Print_Primes_Expected_Output.txt
+========
+OK
+=======
+./expected_output/TEST_02_Bubble_Sort_Expected_Output.txt
+========
+OK
+=======
+./expected_output/TEST_03_Merge_Lists_Expected_Output.txt
+========
+OK
+=======
+./expected_output/TEST_04_Matrices_Expected_Output.txt
+========
+OK
+=======
+./expected_output/TEST_05_Classes_Expected_Output.txt
+========
+OK
+=======
+./expected_output/TEST_06_Print_Primes_Error_Expected_Output.txt
+========
+ERROR(21)
+=======
+./expected_output/TEST_07_Bubble_Sort_Error_Expected_Output.txt
+========
+ERROR(11)
+=======
+./expected_output/TEST_08_Merge_Lists_Error_Expected_Output.txt
+========
+ERROR(7)
+=======
+./expected_output/TEST_09_Matrices_Error_Expected_Output.txt
+========
+ERROR(6)
+=======
+./expected_output/TEST_10_Classes_Error_Expected_Output.txt
+========
+ERROR(23)
+=======
+./ids.txt
+========
+212255087
+322851601
+322371766
+=======
+./input/Input.txt
+========
+GIDI := 60;
+AVROOM := 55 + GIDI;
+JACOB.sons[11] := JOSEF;
+
+=======
+./input/TEST_01_Print_Primes.txt
+========
+int IsPrime(int p)
+{
+    int i := 2;
+    int j := 2;
+    
+    while (i<p)
+    {
+        while (j<p)
+        {
+            if (i*j = p)
+            {
+                 return 1;
+            }
+            j := j+1;
+        }
+        i := i+1;
+    }
+    return 0;
+}
+
+void PrintPrimes(int start, int end)
+{
+    int p := 2;
+    
+    while (p < end+1)
+    {
+        if (IsPrime(p))
+        {
+            PrintInt(p);
+        }
+    }
+}
+
+void main()
+{
+    PrintPrimes(2,100);
+}
+
+=======
+./input/TEST_02_Bubble_Sort.txt
+========
+array IntArray = int[];
+
+void BubbleSort(IntArray arr, int size)
+{
+    int i := 0;
+    int min := -32767;
+    int minIndex := -1;
+    
+    while (i < size)
+    {
+        int j := i+1;
+        while (j<size)
+        {
+            if (arr[j] < min)
+            {
+                int i := arr[minIndex];
+                arr[minIndex] := arr[j];
+                arr[j] := i;
+            }
+        }
+    }
+}
+
+void main()
+{
+    IntArray arr := new int[7];
+    
+    arr[0] := 34;
+    arr[1] := 12;
+    arr[2] := -600;
+    arr[3] := -400;
+    arr[4] := 70;
+    arr[5] := 30;
+    arr[6] := -580;
+    
+    PrintPrimes(2,100);
+}
+
+
+=======
+./input/TEST_03_Merge_Lists.txt
+========
+class IntList
+{
+    int head;
+    IntList tail;
+}
+
+IntList MergeLists(IntList l1, IntList l2)
+{
+    if (l1 = nil)
+    {
+        return l2;
+    }
+    if (l2 = nil)
+    {
+        return l1;
+    }
+    
+    if (l1.head < l2.head)
+    {
+        IntList l3 := l1;
+        l3.tail := MergeLists(l1.tail,l2);
+        return l3;
+    }
+    
+    if (l2.head < l1.head)
+    {
+        IntList l3 := l2;
+        l3.tail := MergeLists(l1,l2.tail);
+        return l3;
+    }
+    
+    /**************************************************/
+    /* Execution falls off here ... what should we do */
+    /**************************************************/
+}
+
+void main()
+{
+    IntList a := new IntList;
+    IntList b := new IntList;
+    IntList c := new IntList;
+    IntList d := new IntList;
+
+    IntList A := new IntList;
+    IntList B := new IntList;
+    IntList C := new IntList;
+    IntList D := new IntList;
+       
+    a.head := 34;
+    b.head := 70;
+    c.head := 92;
+    d.head := 96;
+
+    A.head := 12;
+    B.head := 50;
+    C.head := 97;
+    D.head := 99;
+
+    a.tail := b;
+    b.tail := c;
+    c.tail := d;
+    d.tail := nil;
+
+    A.tail := B;
+    B.tail := C;
+    C.tail := D;
+    D.tail := nil;
+    
+    IntList l := MergeLists(a,A);
+    
+    while (l)
+    {
+        PrintInt(l.head);
+        l := l.tail;
+    }
+}
+
+=======
+./input/TEST_04_Matrices.txt
+========
+array IntArray = int[];
+array Mat      = IntArray[];
+
+int trace3x3(Mat A)
+{
+	return A[0][0]+A[1][1]+A[2][2];
+}
+
+void main()
+{
+	IntArray row0 := new int[3];
+	IntArray row1 := new int[3];
+	IntArray row2 := new int[3];
+
+	Mat A := new IntArray[3];
+
+	A[0][0]:=0;A[0][1]:=1;A[0][2]:=2;
+	A[1][0]:=3;A[1][1]:=4;A[1][2]:=5;
+	A[2][0]:=6;A[2][1]:=7;A[2][2]:=8;
+
+	PrintInt(trace3x3(A));
+}
+
+=======
+./input/TEST_05_Classes.txt
+========
+array IntArray = int[];
+
+class Person
+{
+	int ID;
+	int age;
+
+	IntArray lastYearSalaries;
+
+	int getAge()  { return age;   }
+	int birthday(){ age := age+1; }
+}
+
+class Student extends Person
+{
+	IntArray grades;
+	int getAverage()
+	{
+		int i := 0;
+		int sum := 0;
+		while (i<10)
+		{
+			sum := sum+grades[i];
+			i := i+1;
+		}
+		return sum/10;
+	}
+}
+
+void main()
+{
+	Student moish := new Student;
+	moish.grades := new int[10];
+	moish.lastYearSalaries := new int[12];
+	int COMPILATION := 6;
+
+	moish.grades[COMPILATION] := 99;
+
+	if (moish.getAverage() > 90)
+	{
+		// Bonus from parents for getting good grades
+		moish.lastYearSalaries[7] := moish.lastYearSalaries[7] + 1000;
+	}
+}
+
+=======
+./input/TEST_06_Print_Primes_Error.txt
+========
+int IsPrime(int p)
+{
+    int i := 2;
+    int j := 2;
+    
+    while (i<p)
+    {
+        while (j<p)
+        {
+            if (i*j = p)
+            {
+                 return 1;
+            }
+            j := j+1;
+        }
+        i := i+1;
+    }
+    return 0;
+}
+
+void PrintPrimes(int start,)
+{
+    int p := 2;
+    
+    while (p < end+1)
+    {
+        if (IsPrime(p))
+        {
+            PrintInt(p);
+        }
+    }
+}
+
+void main(void)
+{
+    PrintPrimes(2,100);
+}
+
+=======
+./input/TEST_07_Bubble_Sort_Error.txt
+========
+array IntArray = int[];
+
+void BubbleSort(IntArray arr, int size)
+{
+    int i := 0;
+    int min := -32767;
+    int minIndex := -1;
+    
+    while (i < size)
+    {
+        int j := i+;
+        while (j<size)
+        {
+            if (arr[j] < min)
+            {
+                int i := arr[minIndex];
+                arr[minIndex] := arr[j];
+                arr[j] := i;
+            }
+        }
+    }
+}
+
+void main()
+{
+    IntArray arr := new int[7];
+    
+    arr[0] := 34;
+    arr[1] := 12;
+    arr[2] := -600;
+    arr[3] := -400;
+    arr[4] := 70;
+    arr[5] := 30;
+    arr[6] := -580;
+    
+    PrintPrimes(2,100);
+}
+
+=======
+./input/TEST_08_Merge_Lists_Error.txt
+========
+class IntList
+{
+    int head;
+    IntList tail;
+}
+
+IntList MergeLists(IntList l1, int l2[])
+{
+    if (l1 = nil)
+    {
+        return l2;
+    }
+    if (l2 = nil)
+    {
+        return l1;
+    }
+    
+    if (l1.head < l2.head)
+    {
+        IntList l3 := l1;
+        l3.tail := MergeLists(l1.tail,l2);
+        return l3;
+    }
+    
+    if (l2.head < l1.head)
+    {
+        IntList l3 := l2;
+        l3.tail := MergeLists(l1,l2.tail);
+        return l3;
+    }
+    
+    /**************************************************/
+    /* Execution falls off here ... what should we do */
+    /**************************************************/
+}
+
+void main()
+{
+    IntList a := new IntList;
+    IntList b := new IntList;
+    IntList c := new IntList;
+    IntList d := new IntList;
+
+    IntList A := new IntList;
+    IntList B := new IntList;
+    IntList C := new IntList;
+    IntList D := new IntList;
+       
+    a.head := 34;
+    b.head := 70;
+    c.head := 92;
+    d.head := 96;
+
+    A.head := 12;
+    B.head := 50;
+    C.head := 97;
+    D.head := 99;
+
+    a.tail := b;
+    b.tail := c;
+    c.tail := d;
+    d.tail := nil;
+
+    A.tail := B;
+    B.tail := C;
+    C.tail := D;
+    D.tail := nil;
+    
+    IntList l := MergeLists(a,A);
+    
+    while (l)
+    {
+        PrintInt(l.head);
+        l := l.tail;
+    }
+}
+
+=======
+./input/TEST_09_Matrices_Error.txt
+========
+array IntArray = int[];
+array Mat      = IntArray[];
+
+int trace3x3(Mat A)
+{
+	return return return;
+}
+
+void main()
+{
+	IntArray row0 := new int[3];
+	IntArray row1 := new int[3];
+	IntArray row2 := new int[3];
+
+	Mat A := new IntArray[3];
+
+	A[0][0]:=0;A[0][1]:=1;A[0][2]:=2;
+	A[1][0]:=3;A[1][1]:=4;A[1][2]:=5;
+	A[2][0]:=6;A[2][1]:=7;A[2][2]:=8;
+
+	PrintInt(trace3x3(A));
+}
+
+=======
+./input/TEST_10_Classes_Error.txt
+========
+array IntArray = int[];
+
+class Person
+{
+	int ID;
+	int age;
+
+	IntArray lastYearSalaries;
+
+	int getAge()  { return age;   }
+	int birthday(){ age := age+1; }
+}
+
+class Student extends Person
+{
+	IntArray grades;
+	int getAverage()
+	{
+		int i := 0;
+		int sum := 0;
+		while (i<10)
+		{
+			sum := (sum+grades)[i];
+			i := i+1;
+		}
+		return sum/10;
+	}
+}
+
+void main()
+{
+	Student moish := new Student;
+	moish.grades := new int[10];
+	moish.lastYearSalaries := new int[12];
+	int COMPILATION := 6;
+
+	moish.grades[COMPILATION] := 99;
+
+	if (moish.getAverage() > 90)
+	{
+		// Bonus from parents for getting good grades
+		moish.lastYearSalaries[7] := moish.lastYearSalaries[7] + 1000;
+	}
+}
+
+=======
+./jflex/LEX_FILE.lex
+========
+/***************************/
+/* FILE NAME: LEX_FILE.lex */
+/***************************/
+
+import java_cup.runtime.*;
+
+%%
+
+%class Lexer
+%line
+%column
+%cupsym TokenNames
+%cup
+
+%{
+	private Symbol symbol(int type)               { return new Symbol(type, yyline, yycolumn); }
+	private Symbol symbol(int type, Object value) { return new Symbol(type, yyline, yycolumn, value); }
+
+	public int getLine()              { return yyline + 1; }
+	public int getTokenStartPosition(){ return yycolumn + 1; }
+%}
+
+LineTerminator  = \r|\n|\r\n
+WhiteSpace      = {LineTerminator} | [ \t]
+INTEGER         = 0 | [1-9][0-9]*
+ID              = [a-zA-Z][a-zA-Z0-9]*
+STRING          = \"[a-zA-Z]*\"
+
+/* Allowed characters inside comments according to the language specification */
+CommentChar     = [a-zA-Z0-9\ \t\r\n\(\)\[\]\{\}\?\!\+\-\*\/\.\;]
+
+/* Lexical states for handling comments */
+%state LINE_COMMENT
+%state BLOCK_COMMENT
+
+%%
+
+<YYINITIAL> {
+    /* Transitions to comment states */
+    "//" / [^\r\n]* {LineTerminator}   { yybegin(LINE_COMMENT); }
+    "/*"                               { yybegin(BLOCK_COMMENT); }
+
+    /* Operators and punctuation */
+    "+"                 { return symbol(TokenNames.PLUS); }
+    "-"                 { return symbol(TokenNames.MINUS); }
+    "*"                 { return symbol(TokenNames.TIMES); }
+    "/"                 { return symbol(TokenNames.DIVIDE); }
+    "="                 { return symbol(TokenNames.EQ); }
+    "<"                 { return symbol(TokenNames.LT); }
+    ">"                 { return symbol(TokenNames.GT); }
+    ":="                { return symbol(TokenNames.ASSIGN); }
+    "("                 { return symbol(TokenNames.LPAREN); }
+    ")"                 { return symbol(TokenNames.RPAREN); }
+    "["                 { return symbol(TokenNames.LBRACK); }
+    "]"                 { return symbol(TokenNames.RBRACK); }
+    "{"                 { return symbol(TokenNames.LBRACE); }
+    "}"                 { return symbol(TokenNames.RBRACE); }
+    ","                 { return symbol(TokenNames.COMMA); }
+    "."                 { return symbol(TokenNames.DOT); }
+    ";"                 { return symbol(TokenNames.SEMICOLON); }
+
+    /* Keywords */
+    "class"             { return symbol(TokenNames.CLASS); }
+    "nil"               { return symbol(TokenNames.NIL); }
+    "array"             { return symbol(TokenNames.ARRAY); }
+    "while"             { return symbol(TokenNames.WHILE); }
+    "int"               { return symbol(TokenNames.TYPE_INT); }
+    "void"              { return symbol(TokenNames.TYPE_VOID); }
+    "extends"           { return symbol(TokenNames.EXTENDS); }
+    "return"            { return symbol(TokenNames.RETURN); }
+    "new"               { return symbol(TokenNames.NEW); }
+    "if"                { return symbol(TokenNames.IF); }
+    "else"              { return symbol(TokenNames.ELSE); }
+    "string"            { return symbol(TokenNames.TYPE_STRING); }
+    "and"               { return symbol(TokenNames.AND); }
+    "or"                { return symbol(TokenNames.OR); }
+
+    /* Literals, identifiers, and lexical error cases */
+    0[0-9]+             { throw new Error("LEXICAL_ERROR"); }
+    {STRING}            { return symbol(TokenNames.STRING, yytext()); }
+    {INTEGER}           {
+                            long val = Long.parseLong(yytext());
+                            if (val > 32767) {
+                                throw new Error("LEXICAL_ERROR");
+                            }
+                            return symbol(TokenNames.INT, Integer.valueOf(yytext()));
+                        }
+    {ID}                { return symbol(TokenNames.ID, yytext()); }
+    {WhiteSpace}        { /* Ignore whitespace */ }
+
+    <<EOF>>             { return symbol(TokenNames.EOF); }
+    [^]                 { throw new Error("LEXICAL_ERROR"); }
+}
+
+<LINE_COMMENT> {
+    {LineTerminator}    { yybegin(YYINITIAL); }
+    {CommentChar}       { /* Ignore allowed characters */ }
+    [^]                 { throw new Error("LEXICAL_ERROR"); }
+    <<EOF>>             { return symbol(TokenNames.EOF); }
+}
+
+<BLOCK_COMMENT> {
+    "*/"                { yybegin(YYINITIAL); }
+    {CommentChar}       { /* Ignore allowed characters */ }
+    [^]                 { throw new Error("LEXICAL_ERROR"); }
+    <<EOF>>             { throw new Error("LEXICAL_ERROR"); }
+}
+=======
 ./manifest/MANIFEST.MF
 ========
 Manifest-Version: 1.0
@@ -767,332 +1274,585 @@ Main-Class: Main
 ========
 
 =======
-./ids.txt
+./output/AST_IN_GRAPHVIZ_DOT_FORMAT.txt
 ========
-212255087
-322851601
-322371766
-=======
-./expected_output/TEST_07_Bubble_Sort_Error_Expected_Output.txt
-========
-ERROR(11)
-=======
-./expected_output/TEST_05_Classes_Expected_Output.txt
-========
-OK
-=======
-./expected_output/TEST_10_Classes_Error_Expected_Output.txt
-========
-ERROR(23)
-=======
-./expected_output/TEST_02_Bubble_Sort_Expected_Output.txt
-========
-OK
-=======
-./expected_output/TEST_01_Print_Primes_Expected_Output.txt
-========
-OK
-=======
-./expected_output/TEST_09_Matrices_Error_Expected_Output.txt
-========
-ERROR(6)
-=======
-./expected_output/TEST_08_Merge_Lists_Error_Expected_Output.txt
-========
-ERROR(7)
-=======
-./expected_output/TEST_04_Matrices_Expected_Output.txt
-========
-OK
-=======
-./expected_output/TEST_03_Merge_Lists_Expected_Output.txt
-========
-OK
-=======
-./expected_output/TEST_06_Print_Primes_Error_Expected_Output.txt
-========
-ERROR(21)
-=======
-./jflex/LEX_FILE.lex
-========
-/***************************/
-/* FILE NAME: LEX_FILE.lex */
-/***************************/
-
-/*************/
-/* USER CODE */
-/*************/
-   
-import java_cup.runtime.*;
-
-/******************************/
-/* DOLLAR DOLLAR - DON'T TOUCH! */
-/******************************/
-      
-%%
-   
-/************************************/
-/* OPTIONS AND DECLARATIONS SECTION */
-/************************************/
-   
-/*****************************************************/ 
-/* Lexer is the name of the class JFlex will create. */
-/* The code will be written to the file Lexer.java.  */
-/*****************************************************/ 
-%class Lexer
-
-/********************************************************************/
-/* The current line number can be accessed with the variable yyline */
-/* and the current column number with the variable yycolumn.        */
-/********************************************************************/
-%line
-%column
-    
-/*******************************************************************************/
-/* Note that this has to be the EXACT same name of the class the CUP generates */
-/*******************************************************************************/
-%cupsym TokenNames
-
-/******************************************************************/
-/* CUP compatibility mode interfaces with a CUP generated parser. */
-/******************************************************************/
-%cup
-   
-/****************/
-/* DECLARATIONS */
-/****************/
-/*****************************************************************************/   
-/* Code between %{ and %}, both of which must be at the beginning of a line, */
-/* will be copied verbatim (letter to letter) into the Lexer class code.     */
-/* Here you declare member variables and functions that are used inside the  */
-/* scanner actions.                                                          */  
-/*****************************************************************************/   
-%{
-	/*********************************************************************************/
-	/* Create a new java_cup.runtime.Symbol with information about the current token */
-	/*********************************************************************************/
-	private Symbol symbol(int type)               {return new Symbol(type, yyline, yycolumn);}
-	private Symbol symbol(int type, Object value) {return new Symbol(type, yyline, yycolumn, value);}
-
-	/*******************************************/
-	/* Enable line number extraction from main */
-	/*******************************************/
-	public int getLine()    { return yyline + 1; }
-
-	/**********************************************/
-	/* Enable token position extraction from main */
-	/**********************************************/
-	public int getTokenStartPosition() { return yycolumn + 1; }
-%}
-
-/***********************/
-/* MACRO DECLARATIONS */
-/***********************/
-LineTerminator	= \r|\n|\r\n
-WhiteSpace		= {LineTerminator} | [ \t\f]
-INTEGER			= 0 | [1-9][0-9]*
-ID				= [a-zA-Z]+
-   
-/******************************/
-/* DOLLAR DOLLAR - DON'T TOUCH! */
-/******************************/
-
-%%
-
-/************************************************************/
-/* LEXER matches regular expressions to actions (Java code) */
-/************************************************************/
-   
-/**************************************************************/
-/* YYINITIAL is the state at which the lexer begins scanning. */
-/* So these regular expressions will only be matched if the   */
-/* scanner is in the start state YYINITIAL.                   */
-/**************************************************************/
-
-<YYINITIAL> {
-
-"if"				{ return symbol(TokenNames.IF);}
-"="					{ return symbol(TokenNames.EQ);}
-"."					{ return symbol(TokenNames.DOT);}
-"+"					{ return symbol(TokenNames.PLUS);}
-"-"					{ return symbol(TokenNames.MINUS);}
-"*"					{ return symbol(TokenNames.TIMES);}
-"/"					{ return symbol(TokenNames.DIVIDE);}
-":="				{ return symbol(TokenNames.ASSIGN);}
-"("					{ return symbol(TokenNames.LPAREN);}
-")"					{ return symbol(TokenNames.RPAREN);}
-"["					{ return symbol(TokenNames.LBRACK);}
-"]"					{ return symbol(TokenNames.RBRACK);}
-"{"					{ return symbol(TokenNames.LBRACE);}
-"}"					{ return symbol(TokenNames.RBRACE);}
-";"					{ return symbol(TokenNames.SEMICOLON);}
-{ID}				{ return symbol(TokenNames.ID, yytext());}
-{INTEGER}			{ return symbol(TokenNames.INT, Integer.valueOf(yytext()));}
-{WhiteSpace}		{ /* just skip what was found, do nothing */ }
-{LineTerminator}	{ /* just skip what was found, do nothing */ }
-<<EOF>>				{ return symbol(TokenNames.EOF);}
+digraph
+{
+graph [ordering = "out"]
+v0 [label = "TYPE
+(int)"];
+v1 [label = "ARRAY
+(IntArray)"];
+v1 -> v0;
+v2 [label = "TYPE
+(int)"];
+v3 [label = "VAR DEC
+(ID)"];
+v3 -> v2;
+v4 [label = "TYPE
+(int)"];
+v5 [label = "VAR DEC
+(age)"];
+v5 -> v4;
+v6 [label = "TYPE
+(IntArray)"];
+v7 [label = "VAR DEC
+(lastYearSalaries)"];
+v7 -> v6;
+v8 [label = "TYPE
+(int)"];
+v9 [label = "SIMPLE
+VAR
+(age)"];
+v10 [label = "EXP
+VAR"];
+v10 -> v9;
+v11 [label = "RETURN"];
+v11 -> v10;
+v12 [label = "STMT
+LIST
+"];
+v12 -> v11;
+v13 [label = "FUNC DEC
+(getAge)"];
+v13 -> v8;
+v13 -> v12;
+v14 [label = "TYPE
+(int)"];
+v15 [label = "SIMPLE
+VAR
+(age)"];
+v16 [label = "SIMPLE
+VAR
+(age)"];
+v17 [label = "EXP
+VAR"];
+v17 -> v16;
+v18 [label = "INT(1)"];
+v19 [label = "BINOP(+)"];
+v19 -> v17;
+v19 -> v18;
+v20 [label = "ASSIGN
+left := right
+"];
+v20 -> v15;
+v20 -> v19;
+v21 [label = "STMT
+LIST
+"];
+v21 -> v20;
+v22 [label = "FUNC DEC
+(birthday)"];
+v22 -> v14;
+v22 -> v21;
+v23 [label = "DEC
+LIST"];
+v23 -> v22;
+v24 [label = "DEC
+LIST"];
+v24 -> v13;
+v24 -> v23;
+v25 [label = "DEC
+LIST"];
+v25 -> v7;
+v25 -> v24;
+v26 [label = "DEC
+LIST"];
+v26 -> v5;
+v26 -> v25;
+v27 [label = "DEC
+LIST"];
+v27 -> v3;
+v27 -> v26;
+v28 [label = "CLASS
+(Person)"];
+v28 -> v27;
+v29 [label = "TYPE
+(IntArray)"];
+v30 [label = "VAR DEC
+(grades)"];
+v30 -> v29;
+v31 [label = "TYPE
+(int)"];
+v32 [label = "TYPE
+(int)"];
+v33 [label = "INT(0)"];
+v34 [label = "VAR DEC
+(i)"];
+v34 -> v32;
+v34 -> v33;
+v35 [label = "VAR DEC
+STMT"];
+v35 -> v34;
+v36 [label = "TYPE
+(int)"];
+v37 [label = "INT(0)"];
+v38 [label = "VAR DEC
+(sum)"];
+v38 -> v36;
+v38 -> v37;
+v39 [label = "VAR DEC
+STMT"];
+v39 -> v38;
+v40 [label = "SIMPLE
+VAR
+(i)"];
+v41 [label = "EXP
+VAR"];
+v41 -> v40;
+v42 [label = "INT(10)"];
+v43 [label = "BINOP(<)"];
+v43 -> v41;
+v43 -> v42;
+v44 [label = "SIMPLE
+VAR
+(sum)"];
+v45 [label = "SIMPLE
+VAR
+(sum)"];
+v46 [label = "EXP
+VAR"];
+v46 -> v45;
+v47 [label = "SIMPLE
+VAR
+(grades)"];
+v48 [label = "SIMPLE
+VAR
+(i)"];
+v49 [label = "EXP
+VAR"];
+v49 -> v48;
+v50 [label = "SUBSCRIPT
+VAR
+...[...]"];
+v50 -> v47;
+v50 -> v49;
+v51 [label = "EXP
+VAR"];
+v51 -> v50;
+v52 [label = "BINOP(+)"];
+v52 -> v46;
+v52 -> v51;
+v53 [label = "ASSIGN
+left := right
+"];
+v53 -> v44;
+v53 -> v52;
+v54 [label = "SIMPLE
+VAR
+(i)"];
+v55 [label = "SIMPLE
+VAR
+(i)"];
+v56 [label = "EXP
+VAR"];
+v56 -> v55;
+v57 [label = "INT(1)"];
+v58 [label = "BINOP(+)"];
+v58 -> v56;
+v58 -> v57;
+v59 [label = "ASSIGN
+left := right
+"];
+v59 -> v54;
+v59 -> v58;
+v60 [label = "STMT
+LIST
+"];
+v60 -> v59;
+v61 [label = "STMT
+LIST
+"];
+v61 -> v53;
+v61 -> v60;
+v62 [label = "WHILE"];
+v62 -> v43;
+v62 -> v61;
+v63 [label = "SIMPLE
+VAR
+(sum)"];
+v64 [label = "EXP
+VAR"];
+v64 -> v63;
+v65 [label = "INT(10)"];
+v66 [label = "BINOP(/)"];
+v66 -> v64;
+v66 -> v65;
+v67 [label = "RETURN"];
+v67 -> v66;
+v68 [label = "STMT
+LIST
+"];
+v68 -> v67;
+v69 [label = "STMT
+LIST
+"];
+v69 -> v62;
+v69 -> v68;
+v70 [label = "STMT
+LIST
+"];
+v70 -> v39;
+v70 -> v69;
+v71 [label = "STMT
+LIST
+"];
+v71 -> v35;
+v71 -> v70;
+v72 [label = "FUNC DEC
+(getAverage)"];
+v72 -> v31;
+v72 -> v71;
+v73 [label = "DEC
+LIST"];
+v73 -> v72;
+v74 [label = "DEC
+LIST"];
+v74 -> v30;
+v74 -> v73;
+v75 [label = "CLASS
+(Student extends Person)"];
+v75 -> v74;
+v76 [label = "TYPE
+(void)"];
+v77 [label = "TYPE
+(Student)"];
+v78 [label = "TYPE
+(Student)"];
+v79 [label = "NEW"];
+v79 -> v78;
+v80 [label = "VAR DEC
+(moish)"];
+v80 -> v77;
+v80 -> v79;
+v81 [label = "VAR DEC
+STMT"];
+v81 -> v80;
+v82 [label = "SIMPLE
+VAR
+(moish)"];
+v83 [label = "FIELD
+VAR
+...->grades"];
+v83 -> v82;
+v84 [label = "TYPE
+(int)"];
+v85 [label = "INT(10)"];
+v86 [label = "NEW
+ARRAY"];
+v86 -> v84;
+v86 -> v85;
+v87 [label = "ASSIGN
+left := right
+"];
+v87 -> v83;
+v87 -> v86;
+v88 [label = "SIMPLE
+VAR
+(moish)"];
+v89 [label = "FIELD
+VAR
+...->lastYearSalaries"];
+v89 -> v88;
+v90 [label = "TYPE
+(int)"];
+v91 [label = "INT(12)"];
+v92 [label = "NEW
+ARRAY"];
+v92 -> v90;
+v92 -> v91;
+v93 [label = "ASSIGN
+left := right
+"];
+v93 -> v89;
+v93 -> v92;
+v94 [label = "TYPE
+(int)"];
+v95 [label = "INT(6)"];
+v96 [label = "VAR DEC
+(COMPILATION)"];
+v96 -> v94;
+v96 -> v95;
+v97 [label = "VAR DEC
+STMT"];
+v97 -> v96;
+v98 [label = "SIMPLE
+VAR
+(moish)"];
+v99 [label = "FIELD
+VAR
+...->grades"];
+v99 -> v98;
+v100 [label = "SIMPLE
+VAR
+(COMPILATION)"];
+v101 [label = "EXP
+VAR"];
+v101 -> v100;
+v102 [label = "SUBSCRIPT
+VAR
+...[...]"];
+v102 -> v99;
+v102 -> v101;
+v103 [label = "INT(99)"];
+v104 [label = "ASSIGN
+left := right
+"];
+v104 -> v102;
+v104 -> v103;
+v105 [label = "SIMPLE
+VAR
+(moish)"];
+v106 [label = "CALL
+(getAverage)"];
+v106 -> v105;
+v107 [label = "INT(90)"];
+v108 [label = "BINOP(>)"];
+v108 -> v106;
+v108 -> v107;
+v109 [label = "SIMPLE
+VAR
+(moish)"];
+v110 [label = "FIELD
+VAR
+...->lastYearSalaries"];
+v110 -> v109;
+v111 [label = "INT(7)"];
+v112 [label = "SUBSCRIPT
+VAR
+...[...]"];
+v112 -> v110;
+v112 -> v111;
+v113 [label = "SIMPLE
+VAR
+(moish)"];
+v114 [label = "FIELD
+VAR
+...->lastYearSalaries"];
+v114 -> v113;
+v115 [label = "INT(7)"];
+v116 [label = "SUBSCRIPT
+VAR
+...[...]"];
+v116 -> v114;
+v116 -> v115;
+v117 [label = "EXP
+VAR"];
+v117 -> v116;
+v118 [label = "INT(1000)"];
+v119 [label = "BINOP(+)"];
+v119 -> v117;
+v119 -> v118;
+v120 [label = "ASSIGN
+left := right
+"];
+v120 -> v112;
+v120 -> v119;
+v121 [label = "STMT
+LIST
+"];
+v121 -> v120;
+v122 [label = "IF"];
+v122 -> v108;
+v122 -> v121;
+v123 [label = "STMT
+LIST
+"];
+v123 -> v122;
+v124 [label = "STMT
+LIST
+"];
+v124 -> v104;
+v124 -> v123;
+v125 [label = "STMT
+LIST
+"];
+v125 -> v97;
+v125 -> v124;
+v126 [label = "STMT
+LIST
+"];
+v126 -> v93;
+v126 -> v125;
+v127 [label = "STMT
+LIST
+"];
+v127 -> v87;
+v127 -> v126;
+v128 [label = "STMT
+LIST
+"];
+v128 -> v81;
+v128 -> v127;
+v129 [label = "FUNC DEC
+(main)"];
+v129 -> v76;
+v129 -> v128;
+v130 [label = "DEC
+LIST"];
+v130 -> v129;
+v131 [label = "DEC
+LIST"];
+v131 -> v75;
+v131 -> v130;
+v132 [label = "DEC
+LIST"];
+v132 -> v28;
+v132 -> v131;
+v133 [label = "DEC
+LIST"];
+v133 -> v1;
+v133 -> v132;
+v134 [label = "PROGRAM"];
+v134 -> v133;
 }
+
 =======
 ./src/Main.java
 ========
 import java.io.*;
 import java.io.PrintWriter;
-import java_cup.runtime.Symbol;
 import ast.*;
 
 public class Main
 {
 	static public void main(String argv[])
 	{
-		Lexer l;
+		Lexer l = null;
 		Parser p;
-		Symbol s;
-		AstStmtList ast;
+		AstNode ast;
 		FileReader fileReader;
-		PrintWriter fileWriter;
+		PrintWriter fileWriter = null;
 		String inputFileName = argv[0];
 		String outputFileName = argv[1];
 		
 		try
 		{
-			/********************************/
-			/* [1] Initialize a file reader */
-			/********************************/
+			/* [1] Initialize file reader and writer */
 			fileReader = new FileReader(inputFileName);
-
-			/********************************/
-			/* [2] Initialize a file writer */
-			/********************************/
 			fileWriter = new PrintWriter(outputFileName);
 			
-			/******************************/
-			/* [3] Initialize a new lexer */
-			/******************************/
+			/* [2] Initialize lexer and parser */
 			l = new Lexer(fileReader);
-			
-			/*******************************/
-			/* [4] Initialize a new parser */
-			/*******************************/
 			p = new Parser(l);
 
-			/***********************************/
-			/* [5] 3 ... 2 ... 1 ... Parse !!! */
-			/***********************************/
-			ast = (AstStmtList) p.parse().value;
+			/* [3] Parse input program */
+			ast = (AstNode) p.parse().value;
 			
-			/*************************/
-			/* [6] Print the AST ... */
-			/*************************/
-			ast.printMe();
+			/* [4] Write OK to output file on successful parse */
+			fileWriter.print("OK");
 			
-			/*************************/
-			/* [7] Close output file */
-			/*************************/
-			fileWriter.close();
-			
-			/*************************************/
-			/* [8] Finalize AST GRAPHIZ DOT file */
-			/*************************************/
-			AstGraphviz.getInstance().finalizeFile();
-    	}
-			     
+			/* [5] Print AST and finalize Graphviz DOT file */
+			if (ast != null)
+			{
+				ast.printMe();
+				AstGraphviz.getInstance().finalizeFile();
+			}
+		}
+		catch (Error e)
+		{
+			/* Lexical error */
+			if (fileWriter != null)
+			{
+				fileWriter.print("ERROR");
+			}
+		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
+			/* Syntax error */
+			if (fileWriter != null)
+			{
+				String msg = e.getMessage();
+				if (msg != null && msg.matches("\\d+"))
+				{
+					fileWriter.print("ERROR(" + msg + ")");
+				}
+				else if (l != null)
+				{
+					fileWriter.print("ERROR(" + l.getLine() + ")");
+				}
+				else
+				{
+					fileWriter.print("ERROR");
+				}
+			}
 		}
-	}
-}
-
-
-
-=======
-./src/ast/AstNodeSerialNumber.java
-========
-package ast;
-
-public class AstNodeSerialNumber
-{
-	/*******************************************/
-	/* The serial number is for debug purposes */
-	/* In particular, it can help in creating  */
-	/* a graphviz dot format of the AST ...    */
-	/*******************************************/
-	public int serialNumber;
-	
-	/**************************************/
-	/* USUAL SINGLETON IMPLEMENTATION ... */
-	/**************************************/
-	private static AstNodeSerialNumber instance = null;
-
-	/*****************************/
-	/* PREVENT INSTANTIATION ... */
-	/*****************************/
-	protected AstNodeSerialNumber() {}
-
-	/******************************/
-	/* GET SINGLETON INSTANCE ... */
-	/******************************/
-	private static AstNodeSerialNumber getInstance()
-	{
-		if (instance == null)
+		finally
 		{
-			instance = new AstNodeSerialNumber();
-			instance.serialNumber = 0;
-			
+			if (fileWriter != null)
+			{
+				fileWriter.close();
+			}
 		}
-		return instance;
-	}
-
-	/**********************************/
-	/* GET A UNIQUE SERIAL NUMBER ... */
-	/**********************************/
-	public int get()
-	{
-		return serialNumber++;
-	}
-
-	/**********************************/
-	/* GET A UNIQUE SERIAL NUMBER ... */
-	/**********************************/
-	public static int getFresh()
-	{
-		return AstNodeSerialNumber.getInstance().get();
-	}
-}
-
-=======
-./src/ast/AstStmtIf.java
-========
-package ast;
-
-public class AstStmtIf extends AstStmt
-{
-	public AstExp cond;
-	public AstStmtList body;
-
-	/*******************/
-	/*  CONSTRUCTOR(S) */
-	/*******************/
-	public AstStmtIf(AstExp cond, AstStmtList body)
-	{
-		this.cond = cond;
-		this.body = body;
 	}
 }
 =======
-./src/ast/AstVarField.java
+./src/ast/AstExp.java
 ========
 package ast;
 
-public class AstVarField extends AstVar
+public abstract class AstExp extends AstNode
 {
-	public AstVar var;
-	public String fieldName;
+}
+=======
+./src/ast/AstExpBinop.java
+========
+package ast;
+
+public class AstExpBinop extends AstExp
+{
+	public int op;
+	public AstExp left;
+	public AstExp right;
+
+	public AstExpBinop(AstExp left, AstExp right, int op)
+	{
+		serialNumber = AstNodeSerialNumber.getFresh();
+		System.out.print("====================== exp -> exp BINOP exp\n");
+		this.left = left;
+		this.right = right;
+		this.op = op;
+	}
+
+	public void printMe()
+	{
+		String sop = "";
+		if (op == 0) { sop = "+"; }
+		if (op == 1) { sop = "-"; }
+		if (op == 2) { sop = "*"; }
+		if (op == 3) { sop = "/"; }
+		if (op == 4) { sop = "<"; }
+		if (op == 5) { sop = ">"; }
+		if (op == 6) { sop = "="; }
+		if (op == 7) { sop = "and"; }
+		if (op == 8) { sop = "or"; }
+
+		System.out.print("AST NODE BINOP EXP\n");
+
+		if (left != null) left.printMe();
+		if (right != null) right.printMe();
+
+		AstGraphviz.getInstance().logNode(
+			serialNumber,
+			String.format("BINOP(%s)", sop));
+
+		if (left != null) AstGraphviz.getInstance().logEdge(serialNumber, left.serialNumber);
+		if (right != null) AstGraphviz.getInstance().logEdge(serialNumber, right.serialNumber);
+	}
+}
+=======
+./src/ast/AstExpInt.java
+========
+package ast;
+
+public class AstExpInt extends AstExp
+{
+	public int value;
 	
 	/******************/
 	/* CONSTRUCTOR(S) */
 	/******************/
-	public AstVarField(AstVar var, String fieldName)
+	public AstExpInt(int value)
 	{
 		/******************************/
 		/* SET A UNIQUE SERIAL NUMBER */
@@ -1102,131 +1862,30 @@ public class AstVarField extends AstVar
 		/***************************************/
 		/* PRINT CORRESPONDING DERIVATION RULE */
 		/***************************************/
-		System.out.format("====================== var -> var DOT ID( %s )\n",fieldName);
+		System.out.format("====================== exp -> INT( %d )\n", value);
 
 		/*******************************/
 		/* COPY INPUT DATA MEMBERS ... */
 		/*******************************/
-		this.var = var;
-		this.fieldName = fieldName;
+		this.value = value;
 	}
 
-	/*************************************************/
-	/* The printing message for a field var AST node */
-	/*************************************************/
+	/************************************************/
+	/* The printing message for an int exp AST node */
+	/************************************************/
 	public void printMe()
 	{
-		/*********************************/
-		/* AST NODE TYPE = AST FIELD VAR */
-		/*********************************/
-		System.out.print("AST NODE FIELD VAR\n");
+		/*******************************/
+		/* AST NODE TYPE = AST INT EXP */
+		/*******************************/
+		System.out.format("AST NODE INT( %d )\n",value);
 
-		/**********************************************/
-		/* RECURSIVELY PRINT VAR, then FIELD NAME ... */
-		/**********************************************/
-		if (var != null) var.printMe();
-		System.out.format("FIELD NAME( %s )\n",fieldName);
-
-		/***************************************/
-		/* PRINT Node to AST GRAPHVIZ DOT file */
-		/***************************************/
+		/*********************************/
+		/* Print to AST GRAPHVIZ DOT file */
+		/*********************************/
 		AstGraphviz.getInstance().logNode(
 				serialNumber,
-			String.format("FIELD\nVAR\n...->%s",fieldName));
-		
-		/****************************************/
-		/* PRINT Edges to AST GRAPHVIZ DOT file */
-		/****************************************/
-		if (var != null) AstGraphviz.getInstance().logEdge(serialNumber,var.serialNumber);
-	}
-}
-
-=======
-./src/ast/AstNode.java
-========
-package ast;
-
-public abstract class AstNode
-{
-	/*******************************************/
-	/* The serial number is for debug purposes */
-	/* In particular, it can help in creating  */
-	/* a graphviz dot format of the AST ...    */
-	/*******************************************/
-	public int serialNumber;
-	
-	/***********************************************/
-	/* The default message for an unknown AST node */
-	/***********************************************/
-	public void printMe()
-	{
-		System.out.print("AST NODE UNKNOWN\n");
-	}
-}
-
-=======
-./src/ast/AstStmtAssign.java
-========
-package ast;
-
-public class AstStmtAssign extends AstStmt
-{
-	/***************/
-	/*  var := exp */
-	/***************/
-	public AstVar var;
-	public AstExp exp;
-
-	/*******************/
-	/*  CONSTRUCTOR(S) */
-	/*******************/
-	public AstStmtAssign(AstVar var, AstExp exp)
-	{
-		/******************************/
-		/* SET A UNIQUE SERIAL NUMBER */
-		/******************************/
-		serialNumber = AstNodeSerialNumber.getFresh();
-
-		/***************************************/
-		/* PRINT CORRESPONDING DERIVATION RULE */
-		/***************************************/
-		System.out.print("====================== stmt -> var ASSIGN exp SEMICOLON\n");
-
-		/*******************************/
-		/* COPY INPUT DATA MEMBERS ... */
-		/*******************************/
-		this.var = var;
-		this.exp = exp;
-	}
-
-	/*********************************************************/
-	/* The printing message for an assign statement AST node */
-	/*********************************************************/
-	public void printMe()
-	{
-		/********************************************/
-		/* AST NODE TYPE = AST ASSIGNMENT STATEMENT */
-		/********************************************/
-		System.out.print("AST NODE ASSIGN STMT\n");
-
-		/***********************************/
-		/* RECURSIVELY PRINT VAR + EXP ... */
-		/***********************************/
-		if (var != null) var.printMe();
-		if (exp != null) exp.printMe();
-
-		/***************************************/
-		/* PRINT Node to AST GRAPHVIZ DOT file */
-		/***************************************/
-		AstGraphviz.getInstance().logNode(
-				serialNumber,
-			"ASSIGN\nleft := right\n");
-		
-		/****************************************/
-		/* PRINT Edges to AST GRAPHVIZ DOT file */
-		/****************************************/
-		AstGraphviz.getInstance().logEdge(serialNumber,var.serialNumber);
-		AstGraphviz.getInstance().logEdge(serialNumber,exp.serialNumber);
+			String.format("INT(%d)",value));
 	}
 }
 
@@ -1287,126 +1946,6 @@ public class AstExpVar extends AstExp
 		/****************************************/
 		AstGraphviz.getInstance().logEdge(serialNumber,var.serialNumber);
 			
-	}
-}
-
-=======
-./src/ast/AstStmtWhile.java
-========
-package ast;
-
-public class AstStmtWhile extends AstStmt
-{
-	public AstExp cond;
-	public AstStmtList body;
-
-	/*******************/
-	/*  CONSTRUCTOR(S) */
-	/*******************/
-	public AstStmtWhile(AstExp cond, AstStmtList body)
-	{
-		this.cond = cond;
-		this.body = body;
-	}
-}
-=======
-./src/ast/AstExpInt.java
-========
-package ast;
-
-public class AstExpInt extends AstExp
-{
-	public int value;
-	
-	/******************/
-	/* CONSTRUCTOR(S) */
-	/******************/
-	public AstExpInt(int value)
-	{
-		/******************************/
-		/* SET A UNIQUE SERIAL NUMBER */
-		/******************************/
-		serialNumber = AstNodeSerialNumber.getFresh();
-
-		/***************************************/
-		/* PRINT CORRESPONDING DERIVATION RULE */
-		/***************************************/
-		System.out.format("====================== exp -> INT( %d )\n", value);
-
-		/*******************************/
-		/* COPY INPUT DATA MEMBERS ... */
-		/*******************************/
-		this.value = value;
-	}
-
-	/************************************************/
-	/* The printing message for an int exp AST node */
-	/************************************************/
-	public void printMe()
-	{
-		/*******************************/
-		/* AST NODE TYPE = AST INT EXP */
-		/*******************************/
-		System.out.format("AST NODE INT( %d )\n",value);
-
-		/*********************************/
-		/* Print to AST GRAPHVIZ DOT file */
-		/*********************************/
-		AstGraphviz.getInstance().logNode(
-				serialNumber,
-			String.format("INT(%d)",value));
-	}
-}
-
-=======
-./src/ast/AstVarSimple.java
-========
-package ast;
-
-public class AstVarSimple extends AstVar
-{
-	/************************/
-	/* simple variable name */
-	/************************/
-	public String name;
-	
-	/******************/
-	/* CONSTRUCTOR(S) */
-	/******************/
-	public AstVarSimple(String name)
-	{
-		/******************************/
-		/* SET A UNIQUE SERIAL NUMBER */
-		/******************************/
-		serialNumber = AstNodeSerialNumber.getFresh();
-	
-		/***************************************/
-		/* PRINT CORRESPONDING DERIVATION RULE */
-		/***************************************/
-		System.out.format("====================== var -> ID( %s )\n",name);
-
-		/*******************************/
-		/* COPY INPUT DATA MEMBERS ... */
-		/*******************************/
-		this.name = name;
-	}
-
-	/**************************************************/
-	/* The printing message for a simple var AST node */
-	/**************************************************/
-	public void printMe()
-	{
-		/**********************************/
-		/* AST NODE TYPE = AST SIMPLE VAR */
-		/**********************************/
-		System.out.format("AST NODE SIMPLE VAR( %s )\n",name);
-
-		/*********************************/
-		/* Print to AST GRAPHVIZ DOT file */
-		/*********************************/
-		AstGraphviz.getInstance().logNode(
-				serialNumber,
-			String.format("SIMPLE\nVAR\n(%s)",name));
 	}
 }
 
@@ -1502,6 +2041,198 @@ public class AstGraphviz
 }
 
 =======
+./src/ast/AstNode.java
+========
+package ast;
+
+public abstract class AstNode
+{
+	/* Unique serial number for Graphviz DOT visualization */
+	public int serialNumber;
+
+	/* Line number in source code for semantic error reporting */
+	public int lineNumber;
+
+	public void printMe()
+	{
+		System.out.print("AST NODE UNKNOWN\n");
+	}
+}
+=======
+./src/ast/AstNodeSerialNumber.java
+========
+package ast;
+
+public class AstNodeSerialNumber
+{
+	/*******************************************/
+	/* The serial number is for debug purposes */
+	/* In particular, it can help in creating  */
+	/* a graphviz dot format of the AST ...    */
+	/*******************************************/
+	public int serialNumber;
+	
+	/**************************************/
+	/* USUAL SINGLETON IMPLEMENTATION ... */
+	/**************************************/
+	private static AstNodeSerialNumber instance = null;
+
+	/*****************************/
+	/* PREVENT INSTANTIATION ... */
+	/*****************************/
+	protected AstNodeSerialNumber() {}
+
+	/******************************/
+	/* GET SINGLETON INSTANCE ... */
+	/******************************/
+	private static AstNodeSerialNumber getInstance()
+	{
+		if (instance == null)
+		{
+			instance = new AstNodeSerialNumber();
+			instance.serialNumber = 0;
+			
+		}
+		return instance;
+	}
+
+	/**********************************/
+	/* GET A UNIQUE SERIAL NUMBER ... */
+	/**********************************/
+	public int get()
+	{
+		return serialNumber++;
+	}
+
+	/**********************************/
+	/* GET A UNIQUE SERIAL NUMBER ... */
+	/**********************************/
+	public static int getFresh()
+	{
+		return AstNodeSerialNumber.getInstance().get();
+	}
+}
+
+=======
+./src/ast/AstStmt.java
+========
+package ast;
+
+public abstract class AstStmt extends AstNode
+{
+}
+
+=======
+./src/ast/AstStmtAssign.java
+========
+package ast;
+
+public class AstStmtAssign extends AstStmt
+{
+	/***************/
+	/*  var := exp */
+	/***************/
+	public AstVar var;
+	public AstExp exp;
+
+	/*******************/
+	/*  CONSTRUCTOR(S) */
+	/*******************/
+	public AstStmtAssign(AstVar var, AstExp exp)
+	{
+		/******************************/
+		/* SET A UNIQUE SERIAL NUMBER */
+		/******************************/
+		serialNumber = AstNodeSerialNumber.getFresh();
+
+		/***************************************/
+		/* PRINT CORRESPONDING DERIVATION RULE */
+		/***************************************/
+		System.out.print("====================== stmt -> var ASSIGN exp SEMICOLON\n");
+
+		/*******************************/
+		/* COPY INPUT DATA MEMBERS ... */
+		/*******************************/
+		this.var = var;
+		this.exp = exp;
+	}
+
+	/*********************************************************/
+	/* The printing message for an assign statement AST node */
+	/*********************************************************/
+	public void printMe()
+	{
+		/********************************************/
+		/* AST NODE TYPE = AST ASSIGNMENT STATEMENT */
+		/********************************************/
+		System.out.print("AST NODE ASSIGN STMT\n");
+
+		/***********************************/
+		/* RECURSIVELY PRINT VAR + EXP ... */
+		/***********************************/
+		if (var != null) var.printMe();
+		if (exp != null) exp.printMe();
+
+		/***************************************/
+		/* PRINT Node to AST GRAPHVIZ DOT file */
+		/***************************************/
+		AstGraphviz.getInstance().logNode(
+				serialNumber,
+			"ASSIGN\nleft := right\n");
+		
+		/****************************************/
+		/* PRINT Edges to AST GRAPHVIZ DOT file */
+		/****************************************/
+		AstGraphviz.getInstance().logEdge(serialNumber,var.serialNumber);
+		AstGraphviz.getInstance().logEdge(serialNumber,exp.serialNumber);
+	}
+}
+
+=======
+./src/ast/AstStmtIf.java
+========
+package ast;
+
+public class AstStmtIf extends AstStmt
+{
+	public AstExp cond;
+	public AstStmtList body;
+	public AstStmtList elseBody;
+
+	public AstStmtIf(AstExp cond, AstStmtList body, AstStmtList elseBody)
+	{
+		serialNumber = AstNodeSerialNumber.getFresh();
+		if (elseBody == null)
+		{
+			System.out.print("====================== stmt -> IF ( exp ) { stmtList }\n");
+		}
+		else
+		{
+			System.out.print("====================== stmt -> IF ( exp ) { stmtList } ELSE { stmtList }\n");
+		}
+		this.cond = cond;
+		this.body = body;
+		this.elseBody = elseBody;
+	}
+
+	public void printMe()
+	{
+		System.out.print("AST NODE IF STMT\n");
+
+		if (cond != null) cond.printMe();
+		if (body != null) body.printMe();
+		if (elseBody != null) elseBody.printMe();
+
+		AstGraphviz.getInstance().logNode(
+			serialNumber,
+			elseBody == null ? "IF" : "IF\nELSE");
+
+		if (cond != null) AstGraphviz.getInstance().logEdge(serialNumber, cond.serialNumber);
+		if (body != null) AstGraphviz.getInstance().logEdge(serialNumber, body.serialNumber);
+		if (elseBody != null) AstGraphviz.getInstance().logEdge(serialNumber, elseBody.serialNumber);
+	}
+}
+=======
 ./src/ast/AstStmtList.java
 ========
 package ast;
@@ -1570,78 +2301,36 @@ public class AstStmtList extends AstNode
 }
 
 =======
-./src/ast/AstExpBinop.java
+./src/ast/AstStmtWhile.java
 ========
 package ast;
 
-public class AstExpBinop extends AstExp
+public class AstStmtWhile extends AstStmt
 {
-	int op;
-	public AstExp left;
-	public AstExp right;
-	
-	/******************/
-	/* CONSTRUCTOR(S) */
-	/******************/
-	public AstExpBinop(AstExp left, AstExp right, int op)
+	public AstExp cond;
+	public AstStmtList body;
+
+	public AstStmtWhile(AstExp cond, AstStmtList body)
 	{
-		/******************************/
-		/* SET A UNIQUE SERIAL NUMBER */
-		/******************************/
 		serialNumber = AstNodeSerialNumber.getFresh();
-
-		/***************************************/
-		/* PRINT CORRESPONDING DERIVATION RULE */
-		/***************************************/
-		System.out.print("====================== exp -> exp BINOP exp\n");
-
-		/*******************************/
-		/* COPY INPUT DATA MEMBERS ... */
-		/*******************************/
-		this.left = left;
-		this.right = right;
-		this.op = op;
+		System.out.print("====================== stmt -> WHILE ( exp ) { stmtList }\n");
+		this.cond = cond;
+		this.body = body;
 	}
-	
-	/*************************************************/
-	/* The printing message for a binop exp AST node */
-	/*************************************************/
+
 	public void printMe()
 	{
-		String sop="";
-		
-		/*********************************/
-		/* CONVERT op to a printable sop */
-		/*********************************/
-		if (op == 0) {sop = "+";}
-		if (op == 1) {sop = "-";}
-		
-		/*************************************/
-		/* AST NODE TYPE = AST BINOP EXP */
-		/*************************************/
-		System.out.print("AST NODE BINOP EXP\n");
+		System.out.print("AST NODE WHILE STMT\n");
 
-		/**************************************/
-		/* RECURSIVELY PRINT left + right ... */
-		/**************************************/
-		if (left != null) left.printMe();
-		if (right != null) right.printMe();
-		
-		/***************************************/
-		/* PRINT Node to AST GRAPHVIZ DOT file */
-		/***************************************/
-		AstGraphviz.getInstance().logNode(
-				serialNumber,
-			String.format("BINOP(%s)",sop));
-		
-		/****************************************/
-		/* PRINT Edges to AST GRAPHVIZ DOT file */
-		/****************************************/
-		if (left  != null) AstGraphviz.getInstance().logEdge(serialNumber,left.serialNumber);
-		if (right != null) AstGraphviz.getInstance().logEdge(serialNumber,right.serialNumber);
+		if (cond != null) cond.printMe();
+		if (body != null) body.printMe();
+
+		AstGraphviz.getInstance().logNode(serialNumber, "WHILE");
+
+		if (cond != null) AstGraphviz.getInstance().logEdge(serialNumber, cond.serialNumber);
+		if (body != null) AstGraphviz.getInstance().logEdge(serialNumber, body.serialNumber);
 	}
 }
-
 =======
 ./src/ast/AstVar.java
 ========
@@ -1652,20 +2341,117 @@ public abstract class AstVar extends AstNode
 }
 
 =======
-./src/ast/AstExp.java
+./src/ast/AstVarField.java
 ========
 package ast;
 
-public abstract class AstExp extends AstNode
+public class AstVarField extends AstVar
 {
+	public AstVar var;
+	public String fieldName;
+	
+	/******************/
+	/* CONSTRUCTOR(S) */
+	/******************/
+	public AstVarField(AstVar var, String fieldName)
+	{
+		/******************************/
+		/* SET A UNIQUE SERIAL NUMBER */
+		/******************************/
+		serialNumber = AstNodeSerialNumber.getFresh();
+
+		/***************************************/
+		/* PRINT CORRESPONDING DERIVATION RULE */
+		/***************************************/
+		System.out.format("====================== var -> var DOT ID( %s )\n",fieldName);
+
+		/*******************************/
+		/* COPY INPUT DATA MEMBERS ... */
+		/*******************************/
+		this.var = var;
+		this.fieldName = fieldName;
+	}
+
+	/*************************************************/
+	/* The printing message for a field var AST node */
+	/*************************************************/
+	public void printMe()
+	{
+		/*********************************/
+		/* AST NODE TYPE = AST FIELD VAR */
+		/*********************************/
+		System.out.print("AST NODE FIELD VAR\n");
+
+		/**********************************************/
+		/* RECURSIVELY PRINT VAR, then FIELD NAME ... */
+		/**********************************************/
+		if (var != null) var.printMe();
+		System.out.format("FIELD NAME( %s )\n",fieldName);
+
+		/***************************************/
+		/* PRINT Node to AST GRAPHVIZ DOT file */
+		/***************************************/
+		AstGraphviz.getInstance().logNode(
+				serialNumber,
+			String.format("FIELD\nVAR\n...->%s",fieldName));
+		
+		/****************************************/
+		/* PRINT Edges to AST GRAPHVIZ DOT file */
+		/****************************************/
+		if (var != null) AstGraphviz.getInstance().logEdge(serialNumber,var.serialNumber);
+	}
 }
+
 =======
-./src/ast/AstStmt.java
+./src/ast/AstVarSimple.java
 ========
 package ast;
 
-public abstract class AstStmt extends AstNode
+public class AstVarSimple extends AstVar
 {
+	/************************/
+	/* simple variable name */
+	/************************/
+	public String name;
+	
+	/******************/
+	/* CONSTRUCTOR(S) */
+	/******************/
+	public AstVarSimple(String name)
+	{
+		/******************************/
+		/* SET A UNIQUE SERIAL NUMBER */
+		/******************************/
+		serialNumber = AstNodeSerialNumber.getFresh();
+	
+		/***************************************/
+		/* PRINT CORRESPONDING DERIVATION RULE */
+		/***************************************/
+		System.out.format("====================== var -> ID( %s )\n",name);
+
+		/*******************************/
+		/* COPY INPUT DATA MEMBERS ... */
+		/*******************************/
+		this.name = name;
+	}
+
+	/**************************************************/
+	/* The printing message for a simple var AST node */
+	/**************************************************/
+	public void printMe()
+	{
+		/**********************************/
+		/* AST NODE TYPE = AST SIMPLE VAR */
+		/**********************************/
+		System.out.format("AST NODE SIMPLE VAR( %s )\n",name);
+
+		/*********************************/
+		/* Print to AST GRAPHVIZ DOT file */
+		/*********************************/
+		AstGraphviz.getInstance().logNode(
+				serialNumber,
+			String.format("SIMPLE\nVAR\n(%s)",name));
+	}
 }
 
 =======
@@ -1728,5 +2514,515 @@ public class AstVarSubscript extends AstVar
 		/****************************************/
 		if (var       != null) AstGraphviz.getInstance().logEdge(serialNumber,var.serialNumber);
 		if (subscript != null) AstGraphviz.getInstance().logEdge(serialNumber,subscript.serialNumber);
+	}
+}
+
+=======
+./src/ast/AstProgram.java
+========
+package ast;
+
+public class AstProgram extends AstNode
+{
+	public AstDecList decList;
+
+	public AstProgram(AstDecList decList)
+	{
+		serialNumber = AstNodeSerialNumber.getFresh();
+		System.out.print("====================== program -> decList\n");
+		this.decList = decList;
+	}
+
+	public void printMe()
+	{
+		System.out.print("AST NODE PROGRAM\n");
+
+		if (decList != null) decList.printMe();
+
+		AstGraphviz.getInstance().logNode(serialNumber, "PROGRAM");
+
+		if (decList != null) AstGraphviz.getInstance().logEdge(serialNumber, decList.serialNumber);
+	}
+}
+=======
+./src/ast/AstDec.java
+========
+package ast;
+
+public abstract class AstDec extends AstNode
+{
+}
+=======
+./src/ast/AstDecList.java
+========
+package ast;
+
+public class AstDecList extends AstNode
+{
+	public AstDec head;
+	public AstDecList tail;
+
+	public AstDecList(AstDec head, AstDecList tail)
+	{
+		serialNumber = AstNodeSerialNumber.getFresh();
+		if (tail != null) System.out.print("====================== decList -> dec decList\n");
+		if (tail == null) System.out.print("====================== decList -> dec\n");
+		this.head = head;
+		this.tail = tail;
+	}
+
+	public void printMe()
+	{
+		System.out.print("AST NODE DEC LIST\n");
+
+		if (head != null) head.printMe();
+		if (tail != null) tail.printMe();
+
+		AstGraphviz.getInstance().logNode(serialNumber, "DEC\nLIST");
+
+		if (head != null) AstGraphviz.getInstance().logEdge(serialNumber, head.serialNumber);
+		if (tail != null) AstGraphviz.getInstance().logEdge(serialNumber, tail.serialNumber);
+	}
+}
+=======
+./src/ast/AstType.java
+========
+package ast;
+
+public class AstType extends AstNode
+{
+	public String typeName;
+
+	public AstType(String typeName)
+	{
+		serialNumber = AstNodeSerialNumber.getFresh();
+		System.out.format("====================== type -> %s\n", typeName);
+		this.typeName = typeName;
+	}
+
+	public void printMe()
+	{
+		System.out.format("AST NODE TYPE( %s )\n", typeName);
+
+		AstGraphviz.getInstance().logNode(
+			serialNumber,
+			String.format("TYPE\n(%s)", typeName));
+	}
+}
+=======
+./src/ast/AstParamList.java
+========
+package ast;
+
+public class AstParamList extends AstNode
+{
+	public AstType type;
+	public String name;
+	public AstParamList tail;
+
+	public AstParamList(AstType type, String name, AstParamList tail)
+	{
+		serialNumber = AstNodeSerialNumber.getFresh();
+		System.out.format("====================== param -> type ID( %s )\n", name);
+		this.type = type;
+		this.name = name;
+		this.tail = tail;
+	}
+
+	public void printMe()
+	{
+		System.out.format("AST NODE PARAM( %s )\n", name);
+
+		if (type != null) type.printMe();
+		if (tail != null) tail.printMe();
+
+		AstGraphviz.getInstance().logNode(
+			serialNumber,
+			String.format("PARAM\n(%s)", name));
+
+		if (type != null) AstGraphviz.getInstance().logEdge(serialNumber, type.serialNumber);
+		if (tail != null) AstGraphviz.getInstance().logEdge(serialNumber, tail.serialNumber);
+	}
+}
+=======
+./src/ast/AstDecVar.java
+========
+package ast;
+
+public class AstDecVar extends AstDec
+{
+	public AstType type;
+	public String name;
+	public AstExp initExp;
+
+	public AstDecVar(AstType type, String name, AstExp initExp)
+	{
+		serialNumber = AstNodeSerialNumber.getFresh();
+		System.out.format("====================== varDec -> type ID( %s )\n", name);
+		this.type = type;
+		this.name = name;
+		this.initExp = initExp;
+	}
+
+	public void printMe()
+	{
+		System.out.format("AST NODE VAR DEC( %s )\n", name);
+
+		if (type != null) type.printMe();
+		if (initExp != null) initExp.printMe();
+
+		AstGraphviz.getInstance().logNode(
+			serialNumber,
+			String.format("VAR DEC\n(%s)", name));
+
+		if (type != null) AstGraphviz.getInstance().logEdge(serialNumber, type.serialNumber);
+		if (initExp != null) AstGraphviz.getInstance().logEdge(serialNumber, initExp.serialNumber);
+	}
+}
+=======
+./src/ast/AstDecFunc.java
+========
+package ast;
+
+public class AstDecFunc extends AstDec
+{
+	public AstType returnType;
+	public String name;
+	public AstParamList params;
+	public AstStmtList body;
+
+	public AstDecFunc(AstType returnType, String name, AstParamList params, AstStmtList body)
+	{
+		serialNumber = AstNodeSerialNumber.getFresh();
+		System.out.format("====================== funcDec -> type ID( %s )\n", name);
+		this.returnType = returnType;
+		this.name = name;
+		this.params = params;
+		this.body = body;
+	}
+
+	public void printMe()
+	{
+		System.out.format("AST NODE FUNC DEC( %s )\n", name);
+
+		if (returnType != null) returnType.printMe();
+		if (params != null) params.printMe();
+		if (body != null) body.printMe();
+
+		AstGraphviz.getInstance().logNode(
+			serialNumber,
+			String.format("FUNC DEC\n(%s)", name));
+
+		if (returnType != null) AstGraphviz.getInstance().logEdge(serialNumber, returnType.serialNumber);
+		if (params != null) AstGraphviz.getInstance().logEdge(serialNumber, params.serialNumber);
+		if (body != null) AstGraphviz.getInstance().logEdge(serialNumber, body.serialNumber);
+	}
+}
+=======
+./src/ast/AstDecClass.java
+========
+package ast;
+
+public class AstDecClass extends AstDec
+{
+	public String name;
+	public String parentName;
+	public AstDecList fields;
+
+	public AstDecClass(String name, String parentName, AstDecList fields)
+	{
+		serialNumber = AstNodeSerialNumber.getFresh();
+		System.out.format("====================== classDec -> CLASS ID( %s )\n", name);
+		this.name = name;
+		this.parentName = parentName;
+		this.fields = fields;
+	}
+
+	public void printMe()
+	{
+		System.out.format("AST NODE CLASS DEC( %s )\n", name);
+
+		if (fields != null) fields.printMe();
+
+		String label = (parentName == null)
+			? String.format("CLASS\n(%s)", name)
+			: String.format("CLASS\n(%s extends %s)", name, parentName);
+
+		AstGraphviz.getInstance().logNode(serialNumber, label);
+
+		if (fields != null) AstGraphviz.getInstance().logEdge(serialNumber, fields.serialNumber);
+	}
+}
+=======
+./src/ast/AstDecArray.java
+========
+package ast;
+
+public class AstDecArray extends AstDec
+{
+	public String name;
+	public AstType elemType;
+
+	public AstDecArray(String name, AstType elemType)
+	{
+		serialNumber = AstNodeSerialNumber.getFresh();
+		System.out.format("====================== arrayTypedef -> ARRAY ID( %s )\n", name);
+		this.name = name;
+		this.elemType = elemType;
+	}
+
+	public void printMe()
+	{
+		System.out.format("AST NODE ARRAY TYPEDEF( %s )\n", name);
+
+		if (elemType != null) elemType.printMe();
+
+		AstGraphviz.getInstance().logNode(
+			serialNumber,
+			String.format("ARRAY\n(%s)", name));
+
+		if (elemType != null) AstGraphviz.getInstance().logEdge(serialNumber, elemType.serialNumber);
+	}
+}
+=======
+./src/ast/AstStmtVarDec.java
+========
+package ast;
+
+public class AstStmtVarDec extends AstStmt
+{
+	public AstDecVar varDec;
+
+	public AstStmtVarDec(AstDecVar varDec)
+	{
+		serialNumber = AstNodeSerialNumber.getFresh();
+		System.out.print("====================== stmt -> varDec\n");
+		this.varDec = varDec;
+	}
+
+	public void printMe()
+	{
+		System.out.print("AST NODE VAR DEC STMT\n");
+
+		if (varDec != null) varDec.printMe();
+
+		AstGraphviz.getInstance().logNode(serialNumber, "VAR DEC\nSTMT");
+
+		if (varDec != null) AstGraphviz.getInstance().logEdge(serialNumber, varDec.serialNumber);
+	}
+}
+=======
+./src/ast/AstStmtReturn.java
+========
+package ast;
+
+public class AstStmtReturn extends AstStmt
+{
+	public AstExp exp;
+
+	public AstStmtReturn(AstExp exp)
+	{
+		serialNumber = AstNodeSerialNumber.getFresh();
+		if (exp == null)
+		{
+			System.out.print("====================== stmt -> RETURN SEMICOLON\n");
+		}
+		else
+		{
+			System.out.print("====================== stmt -> RETURN exp SEMICOLON\n");
+		}
+		this.exp = exp;
+	}
+
+	public void printMe()
+	{
+		System.out.print("AST NODE RETURN STMT\n");
+
+		if (exp != null) exp.printMe();
+
+		AstGraphviz.getInstance().logNode(serialNumber, "RETURN");
+
+		if (exp != null) AstGraphviz.getInstance().logEdge(serialNumber, exp.serialNumber);
+	}
+}
+=======
+./src/ast/AstStmtCall.java
+========
+package ast;
+
+public class AstStmtCall extends AstStmt
+{
+	public AstExpCall call;
+
+	public AstStmtCall(AstExpCall call)
+	{
+		serialNumber = AstNodeSerialNumber.getFresh();
+		System.out.print("====================== stmt -> callExp SEMICOLON\n");
+		this.call = call;
+	}
+
+	public void printMe()
+	{
+		System.out.print("AST NODE CALL STMT\n");
+
+		if (call != null) call.printMe();
+
+		AstGraphviz.getInstance().logNode(serialNumber, "CALL\nSTMT");
+
+		if (call != null) AstGraphviz.getInstance().logEdge(serialNumber, call.serialNumber);
+	}
+}
+=======
+./src/ast/AstExpList.java
+========
+package ast;
+
+public class AstExpList extends AstNode
+{
+	public AstExp head;
+	public AstExpList tail;
+
+	public AstExpList(AstExp head, AstExpList tail)
+	{
+		serialNumber = AstNodeSerialNumber.getFresh();
+		if (tail != null) System.out.print("====================== expList -> exp COMMA expList\n");
+		if (tail == null) System.out.print("====================== expList -> exp\n");
+		this.head = head;
+		this.tail = tail;
+	}
+
+	public void printMe()
+	{
+		System.out.print("AST NODE EXP LIST\n");
+
+		if (head != null) head.printMe();
+		if (tail != null) tail.printMe();
+
+		AstGraphviz.getInstance().logNode(serialNumber, "EXP\nLIST");
+
+		if (head != null) AstGraphviz.getInstance().logEdge(serialNumber, head.serialNumber);
+		if (tail != null) AstGraphviz.getInstance().logEdge(serialNumber, tail.serialNumber);
+	}
+}
+=======
+./src/ast/AstExpCall.java
+========
+package ast;
+
+public class AstExpCall extends AstExp
+{
+	public AstVar var;
+	public String funcName;
+	public AstExpList args;
+
+	public AstExpCall(AstVar var, String funcName, AstExpList args)
+	{
+		serialNumber = AstNodeSerialNumber.getFresh();
+		System.out.format("====================== callExp -> ID( %s ) ( args )\n", funcName);
+		this.var = var;
+		this.funcName = funcName;
+		this.args = args;
+	}
+
+	public void printMe()
+	{
+		System.out.format("AST NODE CALL EXP( %s )\n", funcName);
+
+		if (var != null) var.printMe();
+		if (args != null) args.printMe();
+
+		AstGraphviz.getInstance().logNode(
+			serialNumber,
+			String.format("CALL\n(%s)", funcName));
+
+		if (var != null) AstGraphviz.getInstance().logEdge(serialNumber, var.serialNumber);
+		if (args != null) AstGraphviz.getInstance().logEdge(serialNumber, args.serialNumber);
+	}
+}
+=======
+./src/ast/AstExpNew.java
+========
+package ast;
+
+public class AstExpNew extends AstExp
+{
+	public AstType type;
+	public AstExp sizeExp;
+
+	public AstExpNew(AstType type, AstExp sizeExp)
+	{
+		serialNumber = AstNodeSerialNumber.getFresh();
+		if (sizeExp == null)
+		{
+			System.out.print("====================== newExp -> NEW type\n");
+		}
+		else
+		{
+			System.out.print("====================== newExp -> NEW type [ exp ]\n");
+		}
+		this.type = type;
+		this.sizeExp = sizeExp;
+	}
+
+	public void printMe()
+	{
+		System.out.print("AST NODE NEW EXP\n");
+
+		if (type != null) type.printMe();
+		if (sizeExp != null) sizeExp.printMe();
+
+		AstGraphviz.getInstance().logNode(
+			serialNumber,
+			sizeExp == null ? "NEW" : "NEW\nARRAY");
+
+		if (type != null) AstGraphviz.getInstance().logEdge(serialNumber, type.serialNumber);
+		if (sizeExp != null) AstGraphviz.getInstance().logEdge(serialNumber, sizeExp.serialNumber);
+	}
+}
+=======
+./src/ast/AstExpNil.java
+========
+package ast;
+
+public class AstExpNil extends AstExp
+{
+	public AstExpNil()
+	{
+		serialNumber = AstNodeSerialNumber.getFresh();
+		System.out.print("====================== exp -> NIL\n");
+	}
+
+	public void printMe()
+	{
+		System.out.print("AST NODE NIL\n");
+
+		AstGraphviz.getInstance().logNode(serialNumber, "NIL");
+	}
+}
+=======
+./src/ast/AstExpString.java
+========
+package ast;
+
+public class AstExpString extends AstExp
+{
+	public String value;
+
+	public AstExpString(String value)
+	{
+		serialNumber = AstNodeSerialNumber.getFresh();
+		System.out.format("====================== exp -> STRING( %s )\n", value);
+		this.value = value;
+	}
+
+	public void printMe()
+	{
+		System.out.format("AST NODE STRING( %s )\n", value);
+
+		/* Strip double quotes to keep Graphviz DOT label syntax valid */
+		String clean = value.replace("\"", "");
+		AstGraphviz.getInstance().logNode(
+			serialNumber,
+			String.format("STRING(%s)", clean));
 	}
 }
