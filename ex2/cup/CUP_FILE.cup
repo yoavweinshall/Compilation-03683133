@@ -146,7 +146,328 @@ start with program;
 /********************/
 /* DERIVATION RULES */
 /********************/
-/* Placeholder rules - will be completed in Subtask 4b */
-program     ::= decList:l {: RESULT = new AstProgram(l); :};
-decList     ::= dec:d {: RESULT = new AstDecList(d, null); :};
-dec         ::= varDec:v {: RESULT = v; :};
+
+program         ::= decList:l
+                    {:
+                        RESULT = new AstProgram(l);
+                        RESULT.lineNumber = lleft + 1;
+                    :}
+                    ;
+
+decList         ::= dec:d decList:l
+                    {:
+                        RESULT = new AstDecList(d, l);
+                        RESULT.lineNumber = dleft + 1;
+                    :}
+                    | dec:d
+                    {:
+                        RESULT = new AstDecList(d, null);
+                        RESULT.lineNumber = dleft + 1;
+                    :}
+                    ;
+
+dec             ::= varDec:v        {: RESULT = v; :}
+                    | funcDec:f     {: RESULT = f; :}
+                    | classDec:c    {: RESULT = c; :}
+                    | arrayTypedef:a {: RESULT = a; :}
+                    ;
+
+type            ::= TYPE_INT:t
+                    {:
+                        RESULT = new AstType("int");
+                        RESULT.lineNumber = tleft + 1;
+                    :}
+                    | TYPE_STRING:t
+                    {:
+                        RESULT = new AstType("string");
+                        RESULT.lineNumber = tleft + 1;
+                    :}
+                    | TYPE_VOID:t
+                    {:
+                        RESULT = new AstType("void");
+                        RESULT.lineNumber = tleft + 1;
+                    :}
+                    | ID:name
+                    {:
+                        RESULT = new AstType(name);
+                        RESULT.lineNumber = nameleft + 1;
+                    :}
+                    ;
+
+varDec          ::= type:t ID:name SEMICOLON
+                    {:
+                        RESULT = new AstDecVar(t, name, null);
+                        RESULT.lineNumber = tleft + 1;
+                    :}
+                    | type:t ID:name ASSIGN exp:e SEMICOLON
+                    {:
+                        RESULT = new AstDecVar(t, name, e);
+                        RESULT.lineNumber = tleft + 1;
+                    :}
+                    | type:t ID:name ASSIGN newExp:e SEMICOLON
+                    {:
+                        RESULT = new AstDecVar(t, name, e);
+                        RESULT.lineNumber = tleft + 1;
+                    :}
+                    ;
+
+funcDec         ::= type:t ID:name LPAREN RPAREN LBRACE stmtList:body RBRACE
+                    {:
+                        RESULT = new AstDecFunc(t, name, null, body);
+                        RESULT.lineNumber = tleft + 1;
+                    :}
+                    | type:t ID:name LPAREN paramList:params RPAREN LBRACE stmtList:body RBRACE
+                    {:
+                        RESULT = new AstDecFunc(t, name, params, body);
+                        RESULT.lineNumber = tleft + 1;
+                    :}
+                    ;
+
+paramList       ::= type:t ID:name COMMA paramList:l
+                    {:
+                        RESULT = new AstParamList(t, name, l);
+                        RESULT.lineNumber = tleft + 1;
+                    :}
+                    | type:t ID:name
+                    {:
+                        RESULT = new AstParamList(t, name, null);
+                        RESULT.lineNumber = tleft + 1;
+                    :}
+                    ;
+
+classDec        ::= CLASS:c ID:name LBRACE cFieldList:fields RBRACE
+                    {:
+                        RESULT = new AstDecClass(name, null, fields);
+                        RESULT.lineNumber = cleft + 1;
+                    :}
+                    | CLASS:c ID:name EXTENDS ID:parent LBRACE cFieldList:fields RBRACE
+                    {:
+                        RESULT = new AstDecClass(name, parent, fields);
+                        RESULT.lineNumber = cleft + 1;
+                    :}
+                    ;
+
+cFieldList      ::= cField:f cFieldList:l
+                    {:
+                        RESULT = new AstDecList(f, l);
+                        RESULT.lineNumber = fleft + 1;
+                    :}
+                    | cField:f
+                    {:
+                        RESULT = new AstDecList(f, null);
+                        RESULT.lineNumber = fleft + 1;
+                    :}
+                    ;
+
+cField          ::= varDec:v        {: RESULT = v; :}
+                    | funcDec:f     {: RESULT = f; :}
+                    ;
+
+arrayTypedef    ::= ARRAY:a ID:name EQ type:t LBRACK RBRACK SEMICOLON
+                    {:
+                        RESULT = new AstDecArray(name, t);
+                        RESULT.lineNumber = aleft + 1;
+                    :}
+                    ;
+
+stmtList        ::= stmt:s stmtList:l
+                    {:
+                        RESULT = new AstStmtList(s, l);
+                        RESULT.lineNumber = sleft + 1;
+                    :}
+                    | stmt:s
+                    {:
+                        RESULT = new AstStmtList(s, null);
+                        RESULT.lineNumber = sleft + 1;
+                    :}
+                    ;
+
+stmt            ::= varDec:v
+                    {:
+                        RESULT = new AstStmtVarDec(v);
+                        RESULT.lineNumber = vleft + 1;
+                    :}
+                    | var:v ASSIGN exp:e SEMICOLON
+                    {:
+                        RESULT = new AstStmtAssign(v, e);
+                        RESULT.lineNumber = vleft + 1;
+                    :}
+                    | var:v ASSIGN newExp:e SEMICOLON
+                    {:
+                        RESULT = new AstStmtAssign(v, e);
+                        RESULT.lineNumber = vleft + 1;
+                    :}
+                    | RETURN:r SEMICOLON
+                    {:
+                        RESULT = new AstStmtReturn(null);
+                        RESULT.lineNumber = rleft + 1;
+                    :}
+                    | RETURN:r exp:e SEMICOLON
+                    {:
+                        RESULT = new AstStmtReturn(e);
+                        RESULT.lineNumber = rleft + 1;
+                    :}
+                    | IF:i LPAREN exp:cond RPAREN LBRACE stmtList:body RBRACE
+                    {:
+                        RESULT = new AstStmtIf(cond, body, null);
+                        RESULT.lineNumber = ileft + 1;
+                    :}
+                    | IF:i LPAREN exp:cond RPAREN LBRACE stmtList:body RBRACE ELSE LBRACE stmtList:elseBody RBRACE
+                    {:
+                        RESULT = new AstStmtIf(cond, body, elseBody);
+                        RESULT.lineNumber = ileft + 1;
+                    :}
+                    | WHILE:w LPAREN exp:cond RPAREN LBRACE stmtList:body RBRACE
+                    {:
+                        RESULT = new AstStmtWhile(cond, body);
+                        RESULT.lineNumber = wleft + 1;
+                    :}
+                    | callExp:c SEMICOLON
+                    {:
+                        RESULT = new AstStmtCall(c);
+                        RESULT.lineNumber = cleft + 1;
+                    :}
+                    ;
+
+exp             ::= var:v
+                    {:
+                        RESULT = new AstExpVar(v);
+                        RESULT.lineNumber = vleft + 1;
+                    :}
+                    | LPAREN exp:e RPAREN
+                    {:
+                        RESULT = e;
+                    :}
+                    | exp:e1 PLUS exp:e2
+                    {:
+                        RESULT = new AstExpBinop(e1, e2, 0);
+                        RESULT.lineNumber = e1left + 1;
+                    :}
+                    | exp:e1 MINUS exp:e2
+                    {:
+                        RESULT = new AstExpBinop(e1, e2, 1);
+                        RESULT.lineNumber = e1left + 1;
+                    :}
+                    | exp:e1 TIMES exp:e2
+                    {:
+                        RESULT = new AstExpBinop(e1, e2, 2);
+                        RESULT.lineNumber = e1left + 1;
+                    :}
+                    | exp:e1 DIVIDE exp:e2
+                    {:
+                        RESULT = new AstExpBinop(e1, e2, 3);
+                        RESULT.lineNumber = e1left + 1;
+                    :}
+                    | exp:e1 LT exp:e2
+                    {:
+                        RESULT = new AstExpBinop(e1, e2, 4);
+                        RESULT.lineNumber = e1left + 1;
+                    :}
+                    | exp:e1 GT exp:e2
+                    {:
+                        RESULT = new AstExpBinop(e1, e2, 5);
+                        RESULT.lineNumber = e1left + 1;
+                    :}
+                    | exp:e1 EQ exp:e2
+                    {:
+                        RESULT = new AstExpBinop(e1, e2, 6);
+                        RESULT.lineNumber = e1left + 1;
+                    :}
+                    | exp:e1 AND exp:e2
+                    {:
+                        RESULT = new AstExpBinop(e1, e2, 7);
+                        RESULT.lineNumber = e1left + 1;
+                    :}
+                    | exp:e1 OR exp:e2
+                    {:
+                        RESULT = new AstExpBinop(e1, e2, 8);
+                        RESULT.lineNumber = e1left + 1;
+                    :}
+                    | callExp:c
+                    {:
+                        RESULT = c;
+                    :}
+                    | INT:i
+                    {:
+                        RESULT = new AstExpInt(i);
+                        RESULT.lineNumber = ileft + 1;
+                    :}
+                    | MINUS:m INT:i
+                    {:
+                        RESULT = new AstExpInt(-i);
+                        RESULT.lineNumber = mleft + 1;
+                    :}
+                    | NIL:n
+                    {:
+                        RESULT = new AstExpNil();
+                        RESULT.lineNumber = nleft + 1;
+                    :}
+                    | STRING:s
+                    {:
+                        RESULT = new AstExpString(s);
+                        RESULT.lineNumber = sleft + 1;
+                    :}
+                    ;
+
+newExp          ::= NEW:n type:t
+                    {:
+                        RESULT = new AstExpNew(t, null);
+                        RESULT.lineNumber = nleft + 1;
+                    :}
+                    | NEW:n type:t LBRACK exp:e RBRACK
+                    {:
+                        RESULT = new AstExpNew(t, e);
+                        RESULT.lineNumber = nleft + 1;
+                    :}
+                    ;
+
+callExp         ::= ID:name LPAREN RPAREN
+                    {:
+                        RESULT = new AstExpCall(null, name, null);
+                        RESULT.lineNumber = nameleft + 1;
+                    :}
+                    | ID:name LPAREN expList:args RPAREN
+                    {:
+                        RESULT = new AstExpCall(null, name, args);
+                        RESULT.lineNumber = nameleft + 1;
+                    :}
+                    | var:v DOT ID:name LPAREN RPAREN
+                    {:
+                        RESULT = new AstExpCall(v, name, null);
+                        RESULT.lineNumber = vleft + 1;
+                    :}
+                    | var:v DOT ID:name LPAREN expList:args RPAREN
+                    {:
+                        RESULT = new AstExpCall(v, name, args);
+                        RESULT.lineNumber = vleft + 1;
+                    :}
+                    ;
+
+expList         ::= exp:e COMMA expList:l
+                    {:
+                        RESULT = new AstExpList(e, l);
+                        RESULT.lineNumber = eleft + 1;
+                    :}
+                    | exp:e
+                    {:
+                        RESULT = new AstExpList(e, null);
+                        RESULT.lineNumber = eleft + 1;
+                    :}
+                    ;
+
+var             ::= ID:name
+                    {:
+                        RESULT = new AstVarSimple(name);
+                        RESULT.lineNumber = nameleft + 1;
+                    :}
+                    | var:v DOT ID:fieldName
+                    {:
+                        RESULT = new AstVarField(v, fieldName);
+                        RESULT.lineNumber = vleft + 1;
+                    :}
+                    | var:v LBRACK exp:e RBRACK
+                    {:
+                        RESULT = new AstVarSubscript(v, e);
+                        RESULT.lineNumber = vleft + 1;
+                    :}
+                    ;
