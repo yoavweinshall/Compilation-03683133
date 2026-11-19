@@ -8,34 +8,31 @@ public class Main
 	{
 		Lexer l = null;
 		Parser p;
-		AstNode ast;
+		AstNode ast = null;
 		FileReader fileReader;
 		PrintWriter fileWriter = null;
 		String inputFileName = argv[0];
 		String outputFileName = argv[1];
-		
+		boolean parseSucceeded = false;
+
 		try
 		{
 			/* [1] Initialize file reader and writer */
 			fileReader = new FileReader(inputFileName);
 			fileWriter = new PrintWriter(outputFileName);
-			
+
 			/* [2] Initialize lexer and parser */
 			l = new Lexer(fileReader);
 			p = new Parser(l);
 
 			/* [3] Parse input program */
 			ast = (AstNode) p.parse().value;
-			
-			/* [4] Write OK to output file on successful parse */
+
+			/* [4] Write OK and close output file before AST visualization */
 			fileWriter.print("OK");
-			
-			/* [5] Print AST and finalize Graphviz DOT file */
-			if (ast != null)
-			{
-				ast.printMe();
-				AstGraphviz.getInstance().finalizeFile();
-			}
+			fileWriter.close();
+			fileWriter = null;
+			parseSucceeded = true;
 		}
 		catch (Error e)
 		{
@@ -70,6 +67,20 @@ public class Main
 			if (fileWriter != null)
 			{
 				fileWriter.close();
+			}
+		}
+
+		/* [5] Print AST and finalize Graphviz DOT file safely */
+		if (parseSucceeded && ast != null)
+		{
+			try
+			{
+				ast.printMe();
+				AstGraphviz.getInstance().finalizeFile();
+			}
+			catch (Exception ignored)
+			{
+				/* Do not affect parse output if Graphviz logging fails */
 			}
 		}
 	}
