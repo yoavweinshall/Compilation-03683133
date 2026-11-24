@@ -79,8 +79,8 @@ CommentChar     = [a-zA-Z0-9\ \t\r\n\(\)\[\]\{\}\?\!\+\-\*\/\.\;]
     0[0-9]+             { throw new Error("LEXICAL_ERROR"); }
     {STRING}            { return symbol(TokenNames.STRING, yytext()); }
     {INTEGER}           {
-                            long val = Long.parseLong(yytext());
-                            if (val > 32767) {
+                            String txt = yytext();
+                            if (txt.length() > 5 || Integer.parseInt(txt) > 32767) {
                                 throw new Error("LEXICAL_ERROR");
                             }
                             return symbol(TokenNames.INT, Integer.valueOf(yytext()));
