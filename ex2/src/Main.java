@@ -1,69 +1,87 @@
 import java.io.*;
 import java.io.PrintWriter;
-import java_cup.runtime.Symbol;
 import ast.*;
 
 public class Main
 {
 	static public void main(String argv[])
 	{
-		Lexer l;
+		Lexer l = null;
 		Parser p;
-		Symbol s;
-		AstStmtList ast;
+		AstNode ast = null;
 		FileReader fileReader;
-		PrintWriter fileWriter;
+		PrintWriter fileWriter = null;
 		String inputFileName = argv[0];
 		String outputFileName = argv[1];
-		
+		boolean parseSucceeded = false;
+
 		try
 		{
-			/********************************/
-			/* [1] Initialize a file reader */
-			/********************************/
+			/* [1] Initialize file reader and writer */
 			fileReader = new FileReader(inputFileName);
-
-			/********************************/
-			/* [2] Initialize a file writer */
-			/********************************/
 			fileWriter = new PrintWriter(outputFileName);
-			
-			/******************************/
-			/* [3] Initialize a new lexer */
-			/******************************/
+
+			/* [2] Initialize lexer and parser */
 			l = new Lexer(fileReader);
-			
-			/*******************************/
-			/* [4] Initialize a new parser */
-			/*******************************/
 			p = new Parser(l);
 
-			/***********************************/
-			/* [5] 3 ... 2 ... 1 ... Parse !!! */
-			/***********************************/
-			ast = (AstStmtList) p.parse().value;
-			
-			/*************************/
-			/* [6] Print the AST ... */
-			/*************************/
-			ast.printMe();
-			
-			/*************************/
-			/* [7] Close output file */
-			/*************************/
+			/* [3] Parse input program */
+			ast = (AstNode) p.parse().value;
+
+			/* [4] Write OK and close output file before AST visualization */
+			fileWriter.print("OK");
 			fileWriter.close();
-			
-			/*************************************/
-			/* [8] Finalize AST GRAPHIZ DOT file */
-			/*************************************/
-			AstGraphviz.getInstance().finalizeFile();
-    	}
-			     
+			fileWriter = null;
+			parseSucceeded = true;
+		}
+		catch (Error e)
+		{
+			/* Lexical error */
+			if (fileWriter != null)
+			{
+				fileWriter.print("ERROR");
+			}
+		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
+			/* Syntax error */
+			if (fileWriter != null)
+			{
+				String msg = e.getMessage();
+				if (msg != null && msg.matches("\\d+"))
+				{
+					fileWriter.print("ERROR(" + msg + ")");
+				}
+				else if (l != null)
+				{
+					fileWriter.print("ERROR(" + l.getLine() + ")");
+				}
+				else
+				{
+					fileWriter.print("ERROR");
+				}
+			}
+		}
+		finally
+		{
+			if (fileWriter != null)
+			{
+				fileWriter.close();
+			}
+		}
+
+		/* [5] Print AST and finalize Graphviz DOT file safely */
+		if (parseSucceeded && ast != null)
+		{
+			try
+			{
+				ast.printMe();
+				AstGraphviz.getInstance().finalizeFile();
+			}
+			catch (Exception ignored)
+			{
+				/* Do not affect parse output if Graphviz logging fails */
+			}
 		}
 	}
 }
-
-

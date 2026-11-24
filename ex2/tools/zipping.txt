@@ -1,0 +1,15 @@
+### Package 212255087.zip (including empty ex2/output/) and run self-check ###
+
+rm -rf /tmp/ex2_stage /tmp/ex2_check
+mkdir -p /tmp/ex2_stage/ex2/output /tmp/ex2_check
+
+cp ids.txt /tmp/ex2_stage/
+cp -r cup jflex external_jars manifest Makefile src /tmp/ex2_stage/ex2/
+rm -f /tmp/ex2_stage/ex2/src/Lexer.java /tmp/ex2_stage/ex2/src/Parser.java /tmp/ex2_stage/ex2/src/TokenNames.java
+
+(cd /tmp/ex2_stage && zip -r /tmp/ex2_check/212255087.zip ids.txt ex2)
+
+cp self-check-ex2.zip /tmp/ex2_check/
+cd /tmp/ex2_check
+unzip self-check-ex2.zip
+python self-check.py

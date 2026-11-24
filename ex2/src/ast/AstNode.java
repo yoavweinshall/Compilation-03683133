@@ -2,16 +2,12 @@ package ast;
 
 public abstract class AstNode
 {
-	/*******************************************/
-	/* The serial number is for debug purposes */
-	/* In particular, it can help in creating  */
-	/* a graphviz dot format of the AST ...    */
-	/*******************************************/
+	/* Unique serial number for Graphviz DOT visualization */
 	public int serialNumber;
-	
-	/***********************************************/
-	/* The default message for an unknown AST node */
-	/***********************************************/
+
+	/* Line number in source code for semantic error reporting */
+	public int lineNumber;
+
 	public void printMe()
 	{
 		System.out.print("AST NODE UNKNOWN\n");
