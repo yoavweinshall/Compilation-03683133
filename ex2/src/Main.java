@@ -1,5 +1,5 @@
 import java.io.*;
-import java.io.PrintWriter;
+
 import ast.*;
 
 public class Main
@@ -78,7 +78,7 @@ public class Main
 				ast.printMe();
 				AstGraphviz.getInstance().finalizeFile();
 			}
-			catch (Exception ignored)
+			catch (Throwable ignored)
 			{
 				/* Do not affect parse output if Graphviz logging fails */
 			}
